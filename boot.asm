@@ -1,0 +1,234 @@
+org 07c00h
+	jmp LABEL_BEGIN
+	nop
+
+BaseOfStack		equ		07c00h
+BaseOfLoader	equ		0x1000
+OffsetOfLoader	equ		0x00
+
+RootDirSectors	equ	14
+SectorNumOfRootDirStart	equ	19
+SectorNumOfFAT1Start	equ	1
+SectorBalance	equ	17
+
+	BS_OEMName	db	'MichaelK'
+	BPB_BytesPerSec	dw	512
+	BPB_SecPerClus	db	1
+	BPB_RsvdSecCnt	dw	1
+	BPB_NumFATs	db	2
+	BPB_RootEntCnt	dw	224
+	BPB_TotSec16	dw	2880
+	BPB_Media	db	0xf0
+	BPB_FATSz16	dw	9
+	BPB_SecPerTrk	dw	18
+	BPB_NumHeads	dw	2
+	BPB_HiddSec	dd	0
+	BPB_TotSec32	dd	0
+	BS_DrvNum	db	0
+	BS_Reserved1	db	0
+	BS_BootSig	db	0x29
+	BS_VolID	dd	0
+	BS_VolLab	db	'boot loader'
+	BS_FileSysType	db	'FAT12   '
+
+LABEL_BEGIN:
+	mov ax,cs
+	mov ds,ax
+	mov es,ax
+	mov ss,ax
+	mov sp,07c00h
+
+	mov ax,3h
+	int 10h
+
+	mov	ax,	0200h
+	mov	bx,	0000h
+	mov	dx,	0000h
+	int	10h
+
+	xor ah,ah
+	xor dl,dl
+	int 13h
+
+	mov ax,StartBootingMsg
+	mov cx,BootingMsgLen
+	call DispStr
+
+	mov word [SecLoadStart],SectorNumOfRootDirStart ;0x7c68
+LABEL_START_LOADING_SECTOR:
+	cmp word [RootDirSectorForLoop],0
+	jz LABEL_NO_LOADER
+	dec word [RootDirSectorForLoop]
+
+	mov	ax,00h
+	mov	es,ax
+	mov	bx,8000h
+	mov	ax,[SecLoadStart]
+	mov	cl,1
+	call ReadSector ;es:bx = start addr of loaded sector
+	mov	si,NameOfLoader
+	mov	di,8000h
+	cld
+	mov dx,10h
+
+LABEL_SEARCH_FOR_LOADER:
+	cmp dx,0
+	jz LABEL_SEARCH_NEXT_SECTOR
+	dec dx
+	mov cx,11
+LABEL_COMPARING_NAME:
+	cmp cx,0
+	jz LABEL_FILENAME_FOUND
+	dec cx
+	lodsb
+	cmp al,byte [es:di]
+	jz LABEL_CONTINUE
+	jmp LABEL_DIFFERENT_NAME
+LABEL_CONTINUE:
+	inc di
+	jmp LABEL_COMPARING_NAME
+LABEL_DIFFERENT_NAME:
+	and	di,	0ffe0h
+	add	di,	20h
+	mov si,NameOfLoader
+	jmp LABEL_SEARCH_FOR_LOADER
+
+LABEL_SEARCH_NEXT_SECTOR:
+	add word [SecLoadStart],1
+	jmp LABEL_START_LOADING_SECTOR
+
+LABEL_NO_LOADER:
+	mov ax,MissLoaderMsg
+	mov cx,MissLoaderMsglen
+	call DispStr
+
+	jmp	$
+
+LABEL_FILENAME_FOUND:
+	mov ax,RootDirSectors
+	and di,0ffe0h
+	add di,01ah
+	mov cx,word [es:di]
+	push cx
+	add cx,ax
+	add cx,SectorBalance
+	mov ax,BaseOfLoader
+	mov es,ax
+	mov bx,OffsetOfLoader
+	mov ax,cx
+
+LABEL_CONTINUE_LOADING:
+	mov cl,1
+	call ReadSector
+	pop ax
+	call GetFATEntry
+	cmp ax,0fffh
+	jz LABEL_FILE_LOADED
+	push ax
+	add ax,dx
+	add ax,SectorBalance
+	add bx,[BPB_BytesPerSec]
+	jmp LABEL_CONTINUE_LOADING
+
+LABEL_FILE_LOADED:
+	jmp BaseOfLoader:OffsetOfLoader
+	jmp $
+
+	
+
+SecLoadStart			dw		0
+RootDirSectorForLoop	dw		RootDirSectors
+Odd		db	0
+
+NameOfLoader	db	"LOADER  BIN",0
+
+StartBootingMsg	db	"Booting..."
+BootingMsgLen	equ	$ - StartBootingMsg
+
+TestMsg			db	0dh,0ah,"Here"
+TestMsgLen		equ	$ - TestMsg
+
+MissLoaderMsg	db	0dh,0ah,"Loader Not Found"
+MissLoaderMsglen	equ		$ - MissLoaderMsg
+
+DispStr:  ;AX-> MessageBaseAddr CX->MessageLength
+	mov bp,ax
+	mov	ax,1301h
+	mov	bx,000fh
+	mov dl,0
+	int 10h
+	ret
+
+Debug:
+	mov ax,TestMsg
+	mov cx,TestMsgLen
+	call DispStr
+	ret
+
+ReadSector:
+	push	bp
+	mov	bp,	sp
+	sub	esp,	2
+	mov	byte	[bp - 2],	cl
+	push	bx
+	mov	bl,	[BPB_SecPerTrk]
+	div	bl
+	inc	ah
+	mov	cl,	ah
+	mov	dh,	al
+	shr	al,	1
+	mov	ch,	al
+	and	dh,	1
+	pop	bx
+	mov	dl,	[BS_DrvNum]
+.Go_On_Reading:
+	mov	ah,	2
+	mov	al,	byte	[bp - 2]
+	int	13h
+	jc	.Go_On_Reading
+	add	esp,	2
+	pop	bp
+	ret
+
+GetFATEntry:
+
+	push	es
+	push	bx
+	push	ax
+	mov	ax,	00
+	mov	es,	ax
+	pop	ax
+	mov	byte	[Odd],	0
+	mov	bx,	3
+	mul	bx
+	mov	bx,	2
+	div	bx
+	cmp	dx,	0
+	jz	.Label_Even
+	mov	byte	[Odd],	1
+
+.Label_Even:
+	xor	dx,	dx
+	mov	bx,	[BPB_BytesPerSec]
+	div	bx
+	push	dx
+	mov	bx,	8000h
+	add	ax,	SectorNumOfFAT1Start
+	mov	cl,	2
+	call ReadSector
+	
+	pop	dx
+	add	bx,	dx
+	mov	ax,	[es:bx]
+	cmp	byte	[Odd],	1
+	jnz	.Label_Even_2
+	shr	ax,	4
+
+.Label_Even_2:
+	and	ax,	0fffh
+	pop	bx
+	pop	es
+	ret
+
+times (510-($-$$)) db 0
+dw 0xaa55
