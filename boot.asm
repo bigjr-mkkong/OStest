@@ -38,15 +38,15 @@ LABEL_BEGIN:
 	mov ss,ax
 	mov sp,07c00h
 
-	mov ax,3h
+	mov ax,3h ; clear screen
 	int 10h
 
-	mov	ax,	0200h
+	mov	ax,	0200h ;reset pointer
 	mov	bx,	0000h
 	mov	dx,	0000h
 	int	10h
 
-	xor ah,ah
+	xor ah,ah ;refresh disk driver
 	xor dl,dl
 	int 13h
 
@@ -111,7 +111,7 @@ LABEL_FILENAME_FOUND:
 	mov cx,word [es:di]
 	push cx
 	add cx,ax
-	add cx,SectorBalance
+	add cx,SectorBalance ;cx: first sector of the loader
 	mov ax,BaseOfLoader
 	mov es,ax
 	mov bx,OffsetOfLoader
@@ -120,11 +120,12 @@ LABEL_FILENAME_FOUND:
 LABEL_CONTINUE_LOADING:
 	mov cl,1
 	call ReadSector
-	pop ax
+	pop ax	;ax: offset of fat entry in fat12 table
 	call GetFATEntry
 	cmp ax,0fffh
 	jz LABEL_FILE_LOADED
 	push ax
+	mov dx,RootDirSectors
 	add ax,dx
 	add ax,SectorBalance
 	add bx,[BPB_BytesPerSec]
@@ -132,7 +133,6 @@ LABEL_CONTINUE_LOADING:
 
 LABEL_FILE_LOADED:
 	jmp BaseOfLoader:OffsetOfLoader
-	jmp $
 
 	
 
@@ -166,6 +166,15 @@ Debug:
 	ret
 
 ReadSector:
+; ax: reading start sector number
+; cl: number of sector going to read
+; [es:bx]: buffer of sectors in mem
+
+;ans1=sector_number/sec_per_trk
+;start sector=remainder-1
+;cylinder=ans1>>1
+;head=ans1&1
+
 	push	bp
 	mov	bp,	sp
 	sub	esp,	2
@@ -192,40 +201,41 @@ ReadSector:
 
 GetFATEntry:
 
-	push	es
-	push	bx
-	push	ax
-	mov	ax,	00
-	mov	es,	ax
+	push es
+	push bx
+	push ax
+	mov	ax,00
+	mov	es,ax
 	pop	ax
-	mov	byte	[Odd],	0
-	mov	bx,	3
+	mov	byte [Odd],0
+	mov	bx,3
 	mul	bx
-	mov	bx,	2
+	mov	bx,2
 	div	bx
-	cmp	dx,	0
+	cmp	dx,0
 	jz	.Label_Even
-	mov	byte	[Odd],	1
+	mov	byte [Odd],1; ax is odd number
 
 .Label_Even:
-	xor	dx,	dx
-	mov	bx,	[BPB_BytesPerSec]
-	div	bx
-	push	dx
-	mov	bx,	8000h
-	add	ax,	SectorNumOfFAT1Start
-	mov	cl,	2
+	xor	dx,dx
+	mov	bx,[BPB_BytesPerSec]
+	div	bx; ax: consult, the offset of sector which have fatentry base on fat table
+		  ; dx:remainder, the offset of fatentry base on the sector which contains fatentry 
+	push dx
+	mov	bx,8000h
+	add	ax,SectorNumOfFAT1Start; ax: sector number which has fatentry
+	mov	cl,2
 	call ReadSector
 	
 	pop	dx
-	add	bx,	dx
-	mov	ax,	[es:bx]
-	cmp	byte	[Odd],	1
+	add	bx,dx;bx: offset of fat entry
+	mov	ax,[es:bx]
+	cmp	byte [Odd],1
 	jnz	.Label_Even_2
-	shr	ax,	4
+	shr	ax,4
 
 .Label_Even_2:
-	and	ax,	0fffh
+	and	ax,0fffh
 	pop	bx
 	pop	es
 	ret
