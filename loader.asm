@@ -37,15 +37,15 @@ LABEL_LOADER_START:
 	mov ss,ax
 	mov sp,0x7c00
 
-	mov	ax,	1301h
-	mov	bx,	000fh
-	mov	dx,	0200h		;row 2
-	mov	cx,	StartLoaderMsgLen
-	push	ax
-	mov	ax,	ds
-	mov	es,	ax
+	mov	ax,1301h
+	mov	bx,000fh
+	mov	dx,0200h
+	mov	cx,StartLoaderMsgLen
+	push ax
+	mov	ax,ds
+	mov	es,ax
 	pop	ax
-	mov	bp,	StartLoaderMsg
+	mov	bp,StartLoaderMsg
 	int	10h
 
 ;Enter big real mode, update FS then quit to real mode
@@ -208,9 +208,101 @@ LABEL_KERNEL_LOADED:
 	mov	gs,ax
 	mov	ah,0Fh
 	mov	al,'K'
-	mov	[gs:((80 * 0 + 39) * 2)],ax
+	mov	[gs:((80 * 3 + 0) * 2)],ax
 
-	jmp	$
+KillMotor:
+	push dx
+	mov dx,03f2h
+	mov al,0
+	out dx,al
+	pop dx
+	
+LABEL_GET_MEM_INFO:
+	mov	ax,1301h
+	mov	bx,000Fh
+	mov	dx,0400h
+	mov	cx,StartGetMemStructMessageLen
+	push ax
+	mov	ax,ds
+	mov	es,ax
+	pop	ax
+	mov	bp,StartGetMemStructMessage
+	int	10h
+
+	mov ax,0x00
+	mov es,ax
+	mov di,MemoryStructBufferAddr
+	xor ebx,ebx
+
+LABEL_GET_MEM_STRUCT:
+	mov eax,0x0e820
+	mov ecx,20
+	mov edx,0x534d4150
+
+	int 15h
+
+	jc LABEL_FAIL_TO_GET_MEM_STRUCTURE
+	add di,20
+
+	cmp ebx,0
+	jne LABEL_GET_MEM_STRUCT
+	jmp LABEL_GET_MEM_SUCC 
+
+LABEL_FAIL_TO_GET_MEM_STRUCTURE:
+	mov	ax,1301h
+	mov	bx,008ch
+	mov	dx,0500h
+	mov	cx,ErrToGetMemLen
+	push ax
+	mov	ax,ds
+	mov	es,ax
+	pop	ax
+	mov	bp,ErrToGetMem
+	int	10h
+
+	jmp $
+
+LABEL_GET_MEM_SUCC:
+	mov	ax,1301h
+	mov	bx,000Fh
+	mov	dx,0500h
+	mov	cx,SuccToGetMemInfoLen
+	push ax
+	mov	ax,ds
+	mov	es,ax
+	pop	ax
+	mov	bp,SuccToGetMemInfo
+	int	10h
+
+;Set SVGA mode(VESA VBE)
+	;mov ax,4F02h
+	;mov bx,4180h
+	;int 10h
+
+	cli
+
+	db 0x66
+	lgdt [GdtPtr]
+
+	mov	eax,cr0
+	or eax,1
+	mov	cr0,eax	
+
+	jmp	dword SelectorCode32:LABEL_TEMP_PROTECT_MODE
+
+[SECTION .s32]
+[BITS 32]
+
+LABEL_TEMP_PROTECT_MODE:
+	mov ax,SelectorData32
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+	mov ss,ax
+	mov sp,0x7e00
+
+	;TODO: detect whether cpu support long mode
+	jmp $
 
 
 [SECTION .s16lib]
@@ -290,16 +382,64 @@ GetFATEntry:
 	pop	es
 	ret
 
+DispAL:
+
+	push ecx
+	push edx
+	push edi
+	
+	mov	edi,[DisplayPosition]
+	mov	ah,0Fh
+	mov	dl,al
+	shr	al,4
+	mov	ecx,2
+.begin:
+	and	al,0Fh
+	cmp	al,9
+	ja .1
+	add	al,'0'
+	jmp .2
+.1:
+
+	sub	al,0Ah
+	add	al,'A'
+.2:
+
+	mov	[gs:edi],ax
+	add	edi,2
+	
+	mov	al,dl
+	loop .begin
+
+	mov	[DisplayPosition],edi
+
+	pop	edi
+	pop	edx
+	pop	ecx
+	
+	ret
+
+
 
 RootDirSectorForLoop	dw   RootDirSectors
 SecLoadStart			dw 	 0
 Odd		db	0
 OffsetOfKernelFileCount	dd	OffsetOfKernelFile
+DisplayPosition		dd 		(80*6+0)*2		
 
 StartLoaderMsg 		db		"Loading......"
 StartLoaderMsgLen	equ		$ - StartLoaderMsg
 
 MissKernelMsg 		db		"No KernelFile Exists"
 MissKernelMsglen	equ		$ - MissKernelMsg
+
+StartGetMemStructMessage 	db		"Start Getting Memory Structure......"
+StartGetMemStructMessageLen	equ		$ - StartGetMemStructMessage
+
+ErrToGetMem			db		"Fail to get memory information......"
+ErrToGetMemLen		equ		$ - ErrToGetMem
+
+SuccToGetMemInfo	db		"Success to get memory information"
+SuccToGetMemInfoLen	equ		$ - SuccToGetMemInfo
 
 KernelFileName		db	"KERNEL  BIN",0
