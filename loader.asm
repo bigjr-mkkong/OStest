@@ -33,7 +33,7 @@ LABEL_LOADER_START:
 	mov ax,cs
 	mov ds,ax
 	mov es,ax
-	mov ax,0
+	mov ax,0x00
 	mov ss,ax
 	mov sp,0x7c00
 
@@ -55,8 +55,9 @@ LABEL_LOADER_START:
 	out	92h,al
 	pop	ax
 
-	dd 0x66
-	lgdt [GdtPtr]
+
+	db 0x66
+	lgdt [GdtPtr]	
 
 	cli
 	mov	eax,cr0
@@ -135,9 +136,85 @@ LABEL_NO_KERNEL:
 
 
 LABEL_FILENAME_FOUND:
+	mov ax,RootDirSectors
+	and di,0FFE0h
+	add di,01Ah
+	mov cx, word [es:di]
+	push cx
+	add cx,ax
+	add cx,SectorBalance
+	mov eax,BaseTmpOfKernelAddr
+	mov es,eax
+	mov bx,OffsetTmpOfKernelFile
+	mov ax,cx
+
+LABEL_CONTINUE_LOADING_FILE:
+	mov cl,1
+	call ReadSector
+	pop ax
+
+;Start to mov kernel from temp position to real position
+
+	push cx
+	push eax
+	push fs
+	push edi
+	push ds
+	push esi
+
+	mov cx,200h
+	mov ax,BaseOfKernelFile
+	mov fs,ax
+	mov edi,dword [OffsetOfKernelFileCount]
+
+	mov ax,BaseTmpOfKernelAddr
+	mov ds,ax
+	mov esi,OffsetTmpOfKernelFile
+
+LABEL_MOVING_KERNEL:
+	mov al,byte [ds:esi]
+	mov byte [fs:edi],al
+
+	inc esi
+	inc edi
+
+	loop LABEL_MOVING_KERNEL
+
+	mov eax,0x1000
+	mov ds,eax
+
+	mov dword [OffsetOfKernelFileCount],edi
+
+	pop	esi
+	pop	ds
+	pop	edi
+	pop	fs
+	pop	eax
+	pop	cx
+
+	call GetFATEntry
+	cmp	ax,0FFFh
+	jz LABEL_KERNEL_LOADED
+	push ax
+	mov	dx,RootDirSectors
+	add	ax,dx
+	add	ax,SectorBalance
+
+	jmp	LABEL_CONTINUE_LOADING_FILE
+
+LABEL_KERNEL_LOADED:
+		
+	mov	ax,0B800h
+	mov	gs,ax
+	mov	ah,0Fh
+	mov	al,'K'
+	mov	[gs:((80 * 0 + 39) * 2)],ax
 
 	jmp	$
 
+
+[SECTION .s16lib]
+[BITS 16]
 ReadSector:
 ; ax: reading start sector number
 ; cl: number of sector going to read
@@ -172,9 +249,52 @@ ReadSector:
 	pop	bp
 	ret
 
+GetFATEntry:
+
+	push es
+	push bx
+	push ax
+	mov	ax,00
+	mov	es,ax
+	pop	ax
+	mov	byte [Odd],0
+	mov	bx,3
+	mul	bx
+	mov	bx,2
+	div	bx
+	cmp	dx,0
+	jz	.Label_Even
+	mov	byte [Odd],1; ax is odd number
+
+.Label_Even:
+	xor	dx,dx
+	mov	bx,[BPB_BytesPerSec]
+	div	bx; ax: consult, the offset of sector which have fatentry base on fat table
+		  ; dx:remainder, the offset of fatentry base on the sector which contains fatentry 
+	push dx
+	mov	bx,8000h
+	add	ax,SectorNumOfFAT1Start; ax: sector number which has fatentry
+	mov	cl,2
+	call ReadSector
+	
+	pop	dx
+	add	bx,dx;bx: offset of fat entry
+	mov	ax,[es:bx]
+	cmp	byte [Odd],1
+	jnz	.Label_Even_2
+	shr	ax,4
+
+.Label_Even_2:
+	and	ax,0fffh
+	pop	bx
+	pop	es
+	ret
+
 
 RootDirSectorForLoop	dw   RootDirSectors
 SecLoadStart			dw 	 0
+Odd		db	0
+OffsetOfKernelFileCount	dd	OffsetOfKernelFile
 
 StartLoaderMsg 		db		"Loading......"
 StartLoaderMsgLen	equ		$ - StartLoaderMsg
