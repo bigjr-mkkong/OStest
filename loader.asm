@@ -17,7 +17,6 @@ MemoryStructBufferAddr	equ		0x7e00
 LABEL_GDT			Descriptor			0,			0,			0
 LABEL_DESC_CODE32	Descriptor			0,		0fffffh,	DA_32|DA_CR|DA_LIMIT_4K
 LABEL_DESC_DATA32	Descriptor			0,		0fffffh,	DA_32|DA_DRW|DA_LIMIT_4K
-LABEL_DESC_VIDEO	Descriptor		0b8000h,	0ffffh,		DA_DRW|DA_DPL3
 
 GdtLen	equ		$ - LABEL_GDT
 GdtPtr	dw  GdtLen - 1
@@ -25,7 +24,20 @@ dd LABEL_GDT
 
 SelectorCode32		equ		LABEL_DESC_CODE32 - LABEL_GDT
 SelectorData32		equ		LABEL_DESC_DATA32 - LABEL_GDT
-SelectorVideo		equ		LABEL_DESC_VIDEO - LABEL_GDT
+
+
+[SECTION .gdt64]
+
+LABEL_GDT64:		dq	0x0000000000000000
+LABEL_DESC_CODE64:	dq	0x0020980000000000
+LABEL_DESC_DATA64:	dq	0x0000920000000000
+
+GdtLen64	equ	$ - LABEL_GDT64
+GdtPtr64	dw	GdtLen64 - 1
+dd	LABEL_GDT64
+
+SelectorCode64	equ	LABEL_DESC_CODE64 - LABEL_GDT64
+SelectorData64	equ	LABEL_DESC_DATA64 - LABEL_GDT64
 
 [SECTION .s16]
 [BITS	16]
@@ -286,8 +298,7 @@ LABEL_GET_MEM_SUCC:
 
 	mov	eax,cr0
 	or eax,1
-	mov	cr0,eax	
-
+	mov	cr0,eax
 	jmp	dword SelectorCode32:LABEL_TEMP_PROTECT_MODE
 
 [SECTION .s32]
@@ -301,9 +312,63 @@ LABEL_TEMP_PROTECT_MODE:
 	mov ss,ax
 	mov sp,0x7e00
 
-	;TODO: detect whether cpu support long mode
-	jmp $
+	mov	dword [0x90000],0x91007
+	mov	dword [0x90004],0x00000
+	mov	dword [0x90800],0x91007
+	mov	dword [0x90804],0x00000
 
+	mov	dword [0x91000],0x92007
+	mov	dword [0x91004],0x00000
+
+	mov	dword [0x92000],0x000083
+	mov	dword [0x92004],0x000000
+	mov	dword [0x92008],0x200083
+	mov	dword [0x9200c],0x000000
+	mov	dword [0x92010],0x400083
+	mov	dword [0x92014],0x000000
+	mov	dword [0x92018],0x600083
+	mov	dword [0x9201c],0x000000
+	mov	dword [0x92020],0x800083
+	mov	dword [0x92024],0x000000
+	mov	dword [0x92028],0xa00083
+	mov	dword [0x9202c],0x000000
+
+	db 0x66
+	lgdt [GdtPtr64]
+	mov	ax,SelectorData64
+	mov	ds,ax
+	mov	es,ax
+	mov	fs,ax
+	mov	gs,ax
+	mov	ss,ax
+
+	mov	esp,7E00h
+
+;open PAE
+	mov	eax,cr4
+	or eax,0x20
+	mov	cr4,eax
+
+;load cr3
+
+	mov	eax,0x90000
+	mov	cr3,eax
+
+;enable long-mode
+
+	mov	ecx,0C0000080h	;IA32_EFER
+	rdmsr
+
+	or eax,0x100
+	wrmsr
+
+;open PE and paging
+
+	mov	eax,cr0
+	or eax,0x80000001
+	mov	cr0,eax
+
+	jmp	SelectorCode64:OffsetOfKernelFile
 
 [SECTION .s16lib]
 [BITS 16]
@@ -423,7 +488,7 @@ DispAL:
 
 RootDirSectorForLoop	dw   RootDirSectors
 SecLoadStart			dw 	 0
-Odd		db	0
+Odd		db 	0
 OffsetOfKernelFileCount	dd	OffsetOfKernelFile
 DisplayPosition		dd 		(80*6+0)*2		
 
