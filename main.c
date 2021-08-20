@@ -12,6 +12,6 @@ void Start_Kernel(void)
 
 	/*putchar(pos.FB_addr,pos.Xresolution,pos.Xposition*pos.Xcharsize,
 		pos.Yposition*pos.Ycharsize,BLACK,WHITE,'K');*/
-	printk(BLACK,WHITE,"hello%dworld%c",123,'A');
+	printk(BLACK,WHITE,"hello \n%x",1231);
 	while(1);
 }
