@@ -46,15 +46,127 @@ entry64:
 	movq %rax,%ss
 	movq $0xffff800000007E00,%rsp
 
+setup_idt:
+	leaq unrecord_int(%rip),%rdx			/*rdx: 64:0 offset of unrecord_int*/
+	movq $(0x08<<16),%rax					/*rax: selecotr*/
+	movw %dx,%ax							/*rax: 15:0 offset in rdx move to rax*/
+	movq $(0x8E00<<32),%rcx					/*attribute in rcx*/
+	addq %rcx,%rax							/*rax:attribute & selector & 15:0 offset*/
+	movl %edx,%ecx 							/*ecx: 32:0 offset*/  
+	shrl $16,%ecx 							/*ecx:32:16 offset*/
+	shlq $48,%rcx 							/*rcx:32:16 offset(MSB)*/
+	
+	addq %rcx,%rax 							
+	/*rax:32:16 offset & attribute & selector & 16:0 offset*/
+
+	shrq $32,%rdx 							/*rdx:64:32 offset*/
+	leaq LABEL_IDT(%rip),%rdi 				/*rdi: base addr for idt*/
+	mov $256,%rcx
+.setting:
+	movq %rax,(%rdi)
+	movq %rdx,8(%rdi)
+	addq $0x10,%rdi
+	dec %rcx
+	jne .setting
+
+setup_TSS64:
+	leaq LABEL_TSS64(%rip),%rdx					/*rdx: 64 bits tss offset*/
+	xorq %rax,%rax								/*clear rax and rcx*/
+	xorq %rcx,%rcx
+	movq $0x89,%rax								/*rax:1000 1001*/
+	shlq $40,%rax								/*rax:attri*/
+	movl %edx,%ecx 								/*ecx:31:0  for tss*/
+	shrl $24,%ecx 								/*ecx:31:24 for tss*/
+	shlq $56,%rcx 								/*rcx:31:24 for tss*/
+	addq %rcx,%rax								/*rax:31:24 for tss & attri*/
+	xorq %rcx,%rcx								/*clear rcx*/
+	movl %edx,%ecx 								/*ecx:31:0 for tss*/
+	andl $0xffffff,%ecx 						/*ecx:23:0 for tss*/
+	shlq $16,%rcx 								/*rcx: 47:16->23:0 for tss*/
+	addq %rcx,%rax
+	addq $103,%rax
+	leaq LABEL_GDT64(%rip),%rdi
+	movq %rax,SelectorTss64_1(%rdi)
+	shrq $32,%rdx 								/*rdx:15:0 for tss & limit*/
+	movq %rdx,SelectorTss64_2(%rdi)
+
+	mov	$SelectorTss64_1,%ax
+	ltr	%ax
+
+
 	movq go_to_kernel(%rip),%rax
 	pushq $0x08
 	pushq %rax
 	lretq
 
+
 go_to_kernel:
 	.quad 	Start_Kernel
+	
+unrecord_int:
+	cld
+	pushq %rax
+	pushq %rbx
+	pushq %rcx
+	pushq %rdx
+	pushq %rbp
+	pushq %rdi
+	pushq %rsi
 
-//=======	init page
+	pushq %r8
+	pushq %r9
+	pushq %r10
+	pushq %r11
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
+	movq %es,%rax
+	pushq %rax
+	movq %ds,%rax
+	pushq %rax
+
+	movq $0x10,%rax
+	movq %rax,%ds
+	movq %rax,%es
+
+	leaq int_msg(%rip),%rax
+	pushq %rax
+	movq %rax,%rdx
+	movq $0,%rax
+	callq printk
+	addq $0x8,%rsp
+
+Loop:
+	jmp	Loop	
+
+	popq %rax
+	movq %rax,%ds
+	popq %rax
+	movq %rax,%es
+
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11
+	popq %r10
+	popq %r9
+	popq %r8
+
+	popq %rsi
+	popq %rdi
+	popq %rbp
+	popq %rdx
+	popq %rcx
+	popq %rbx
+	popq %rax
+	iretq
+
+int_msg:
+	.asciz "Unknown interrupt or fault at RIP\n"
+/*======================page table=====================*/
 .align 8
 
 .org 0x1000
@@ -98,15 +210,21 @@ __PDE:
 
 .globl LABEL_GDT64
 
-	LABEL_GDT64:				.quad	0x0000000000000000
-	LABEL_DESC_KERNEL_CODE64:	.quad	0x0020980000000000
-	LABEL_DESC_KERNEL_DATA64:	.quad	0x0000920000000000
-	LABEL_DESC_USER_CODE64:		.quad	0x0020f80000000000
-	LABEL_DESC_USER_DATA64:		.quad	0x0000f20000000000
-	.fill	12,8,0
+	LABEL_GDT64:				.quad	0x0000000000000000 /*0 0x00*/
+	LABEL_DESC_KERNEL_CODE64:	.quad	0x0020980000000000 /*1 0x08*/
+	LABEL_DESC_KERNEL_DATA64:	.quad	0x0000920000000000 /*2 0x10*/
+	LABEL_DESC_USER_CODE64:		.quad	0x0020f80000000000 /*3 0x18*/
+	LABEL_DESC_USER_DATA64:		.quad	0x0000f20000000000 /*4 0x20*/
+	.fill 3,8,0
+	LABEL_DESC_TSS64_1:			.quad	0x0000000000000000 /*7 0x40*/
+	LABEL_DESC_TSS64_2:			.quad	0x0000000000000000 /*8 0x48*/
+	.fill 7,8,0
 GDT_END:
 		
 .equ	SelectorData64 , LABEL_DESC_KERNEL_DATA64 - LABEL_GDT64
+.equ	SelectorCode64 , LABEL_DESC_KERNEL_CODE64 - LABEL_GDT64
+.equ	SelectorTss64_1, LABEL_DESC_TSS64_1 - LABEL_GDT64
+.equ	SelectorTss64_2, LABEL_DESC_TSS64_2 - LABEL_GDT64
 
 GdtPtr:
 GdtLen:	.word	GDT_END - LABEL_GDT64 - 1

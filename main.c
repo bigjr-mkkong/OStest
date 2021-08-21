@@ -10,8 +10,7 @@ void Start_Kernel(void)
 	pos.FB_addr=0xffff800000a00000;
 	pos.FB_len=4096;
 
-	/*putchar(pos.FB_addr,pos.Xresolution,pos.Xposition*pos.Xcharsize,
-		pos.Yposition*pos.Ycharsize,BLACK,WHITE,'K');*/
-	printk(BLACK,WHITE,"hello \n%x",1231);
+	printk(BLACK,WHITE,"hello \n%x\n",1231);
+	int i=1/0;
 	while(1);
 }
