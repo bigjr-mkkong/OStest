@@ -106,7 +106,7 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 			pos.Yposition*pos.Ycharsize,BLACK,WHITE,' ');	
 		}
 		putchar(pos.FB_addr,pos.Xresolution,pos.Xposition*pos.Xcharsize,
-		pos.Yposition*pos.Ycharsize,BLACK,WHITE,*(buf+i));
+		pos.Yposition*pos.Ycharsize,FR_color,BK_color,*(buf+i));
 		pos.Xposition++;
 	}
 }
