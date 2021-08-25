@@ -60,7 +60,7 @@ setup_idt:
 	/*rax:32:16 offset & attribute & selector & 16:0 offset*/
 
 	shrq $32,%rdx 							/*rdx:64:32 offset*/
-	leaq LABEL_IDT(%rip),%rdi 				/*rdi: base addr for idt*/
+	leaq LABEL_IDT(%rip),%rdi				/*rdi: base addr for idt*/
 	mov $256,%rcx
 .setting:
 	movq %rax,(%rdi)
@@ -90,8 +90,8 @@ setup_TSS64:
 	shrq $32,%rdx 								/*rdx:15:0 for tss & limit*/
 	movq %rdx,SelectorTss64_2(%rdi)
 
-	mov	$SelectorTss64_1,%ax
-	ltr	%ax
+	/*mov $SelectorTss64_1,%ax
+	ltr	%ax*/
 
 
 	movq go_to_kernel(%rip),%rax
@@ -244,7 +244,7 @@ IdtLen:	.word	IDT_END - LABEL_IDT - 1
 
 /*=============TSS=========================*/
 
-.globl	LABEL_TSS64
+.globl LABEL_TSS64
 
 LABEL_TSS64:
 	.fill  13,8,0

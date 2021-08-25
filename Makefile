@@ -8,19 +8,27 @@ all: system boot
 	bochs -f bochsrc
 	make clean
 
-system:	head.o main.o printk.o
-	ld -b elf64-x86-64 -o system head.o main.o printk.o -T Kernel.lds 
-
-main.o:	main.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector main.c
+system:	head.o entry.o main.o printk.o trap.o
+	ld -b elf64-x86-64 -o system head.o entry.o main.o printk.o trap.o -T Kernel.lds 
 
 head.o:	head.S
 	gcc -E  head.S > head.s
 	#nasm selfhead.asm -o head.s
 	as --64 -o head.o head.s
 
+entry.o:entry.S
+	gcc -E  entry.S > entry.s
+	#nasm selfhead.asm -o head.s
+	as --64 -o entry.o entry.s
+
+main.o:	main.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector main.c
+
 printk.o:printk.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector printk.c
+
+trap.o:trap.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector trap.c
 
 
 #------------------------bootup-------------------------------
