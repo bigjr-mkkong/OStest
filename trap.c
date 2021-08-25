@@ -230,7 +230,7 @@ void do_page_fault(unsigned long rsp,unsigned long error_code){
 	__asm__	__volatile__("movq %%cr2,%0":"=r"(cr2)::"memory");
 
 	p=(unsigned long *)(rsp+0x98);
-	printk(BLACK,RED,"do_page_fault(14),ERROR_CODE:%x,RSP:%x,RIP:%x\n"
+	printk(BLACK,RED,"Page Fault(#PF)\nErrorCode:%d RSP:%x RIP:%x\n"
 		,error_code,rsp,*p);
 
 	if(!(error_code&0x01)){
