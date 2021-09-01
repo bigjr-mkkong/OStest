@@ -24,7 +24,7 @@ _start:
 
 	movq $0x7E00,%rsp*/
 
-//====================load cr3
+/*====================load cr3*/
 
 	movq $0x101000,%rax
 	movq %rax,%cr3
@@ -33,7 +33,7 @@ _start:
 	pushq %rax
 	lretq
 
-//code below execute in 64-bit
+/*code below execute in 64-bit*/
 
 switch_seg:
 	.quad entry64
@@ -136,10 +136,7 @@ unrecord_int:
 	movq %rax,%rdx
 	movq $0,%rax
 	callq printk
-	addq $0x8,%rsp
-
-Loop:
-	jmp	Loop	
+	addq $0x8,%rsp	
 
 	popq %rax
 	movq %rax,%ds

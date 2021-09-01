@@ -41,5 +41,6 @@ void Start_Kernel(void){
 	for(int i=0;i<16;i++){
 		printk(WHITE,BLACK,"Page %d phyaddr:%x attri:%x\n",i,(p+i)->phy_addr,(p+i)->attribute);
 	}
+	
 	while(1);
 }

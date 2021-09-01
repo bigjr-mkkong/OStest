@@ -76,6 +76,12 @@ int vsprintf(char *fmt,va_list args){
 			}
 		}else if(*fmt=='x'){
 			l_trans=va_arg(args,long);
+			if(l_trans==0){
+				*str++='0';
+				*str++='x';
+				*str++='0';
+				continue;	
+			}
 			*str++='0';
 			*str++='x';
 			str=dec2hex(str,l_trans);
