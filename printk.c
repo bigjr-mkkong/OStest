@@ -97,7 +97,7 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 	for(int i=0;i<len;i++){
 		if((unsigned char)*(buf+i)=='\n'){
 			pos.Yposition++;
-			pos.Xposition = 0;
+			pos.Xposition=0;
 			continue;
 		}
 		else if((unsigned char)*(buf+i)=='\b'){

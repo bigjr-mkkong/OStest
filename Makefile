@@ -8,8 +8,10 @@ all: system boot
 	bochs -f bochsrc
 	make clean
 
-system:	head.o entry.o main.o printk.o trap.o memory.o lib.o
-	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o lib.o -T Kernel.lds 
+system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o
+	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
+	lib.o interrupt.o \
+	-T Kernel.lds 
 
 head.o:	head.S
 	gcc -E  head.S > head.s
@@ -35,6 +37,9 @@ memory.o:memory.c
 
 lib.o:lib.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector lib.c
+
+interrupt.o:interrupt.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector interrupt.c
 
 
 #------------------------bootup-------------------------------

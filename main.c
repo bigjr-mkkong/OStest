@@ -3,6 +3,7 @@
 #include "trap.h"
 #include "lib.h"
 #include "memory.h"
+#include "interrupt.h"
 
 struct Global_Memory_Descriptor mm_struct;
 extern char _text;
@@ -42,5 +43,7 @@ void Start_Kernel(void){
 		printk(WHITE,BLACK,"Page %d phyaddr:%x attri:%x\n",i,(p+i)->phy_addr,(p+i)->attribute);
 	}
 	
+	init_interrupt();
+
 	while(1);
 }
