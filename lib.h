@@ -12,4 +12,10 @@ void flush_tlb();
 unsigned long* Get_gdt();
 void io_out8(unsigned short port,unsigned char value);
 
+typedef struct List{
+	struct List *prev;
+	struct List *next;
+}List;
+
+
 #endif

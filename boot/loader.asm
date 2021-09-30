@@ -495,7 +495,7 @@ DisplayPosition		dd 		(80*6+0)*2
 StartLoaderMsg 		db		"Loading......"
 StartLoaderMsgLen	equ		$ - StartLoaderMsg
 
-MissKernelMsg 		db		"No KernelFile Exists"
+MissKernelMsg 		db		"No Kernel File Exists"
 MissKernelMsglen	equ		$ - MissKernelMsg
 
 StartGetMemStructMessage 	db		"Start Getting Memory Structure......"

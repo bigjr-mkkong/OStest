@@ -1,7 +1,5 @@
 #include "lib.h"
 
-
-
 void *(memset) (void *s,unsigned char c,long n){
     const unsigned char uc=c;
     unsigned char *su;
@@ -48,4 +46,44 @@ unsigned char io_in8(unsigned short port){
                 :"d"(port)
                 :"memory");
     return ret;
+}
+
+void list_init(List *list){
+    list->prev=list;
+    list->next=list;
+    return;
+}
+
+void list_add_to_behind(List *entry, List *newnode){
+    newnode->next=entry->next;
+    entry->next=newnode;
+    newnode->next->prev=newnode;
+    newnode->prev=entry;
+    return;
+}
+
+void list_add_to_before(List *entry,List *newnode){
+    newnode->next=entry;
+    entry->prev->next=newnode;
+    newnode->prev=entry->prev;
+    entry->prev=newnode;
+    return;
+}
+
+void list_del(List *entry){
+    entry->prev->next=entry->next;
+    entry->next->prev=entry->prev;
+    return;
+}
+
+int list_is_empty(List *entry){
+    if(entry->prev==entry&&entry->next==entry){
+        return 1;
+    }
+    return 0;
+}
+
+List *list_next(List *entry){
+    if(entry->next!=NULL) return entry->next;
+    return NULL;
 }
