@@ -203,7 +203,7 @@ struct Global_Memory_Descriptor{
 	unsigned long end_of_struct;//end addr for mm page management struct 
 };
 
-extern struct Global_Memory_Descriptor mm_struct;
+extern struct Global_Memory_Descriptor mman_struct;
 
 int ZONE_DMA_INDEX=0;//mark start of DMA zone
 int ZONE_NORMAL_INDEX=0;//mark start of NORMAL zone

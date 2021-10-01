@@ -5,7 +5,7 @@
 #include "memory.h"
 #include "interrupt.h"
 
-struct Global_Memory_Descriptor mm_struct;
+struct Global_Memory_Descriptor mman_struct;
 extern char _text;
 extern char _etext;
 extern char _edata;
@@ -28,10 +28,10 @@ void Start_Kernel(void){
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
 	set_sys_int();
 
-	mm_struct.start_code=(unsigned long)&_text;
-	mm_struct.end_code=(unsigned long)&_etext;
-	mm_struct.end_data=(unsigned long)&_edata;
-	mm_struct.end_brk=(unsigned long)&_end;
+	mman_struct.start_code=(unsigned long)&_text;
+	mman_struct.end_code=(unsigned long)&_etext;
+	mman_struct.end_data=(unsigned long)&_edata;
+	mman_struct.end_brk=(unsigned long)&_end;
 
 	init_mem();
 
