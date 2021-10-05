@@ -8,6 +8,14 @@ void *(memset) (void *s,unsigned char c,long n){
     return s;
 }
 
+void * memcpy (const void *src, void *dest, long len){
+  char *d = dest;
+  const char *s = src;
+  while (len--)
+    *d++ = *s++;
+  return dest;
+}
+
 unsigned long* Get_gdt(){
     unsigned long * tmp;
     __asm__ __volatile__ (
@@ -31,7 +39,8 @@ void flush_tlb(){
 }
 
 void io_out8(unsigned short port,unsigned char value){
-    __asm__ __volatile__(   "outb   %0, %%dx    \n\t"
+    __asm__ __volatile__(   
+                "outb %0,%%dx    \n\t"
                 "mfence         \n\t"
                 :
                 :"a"(value),"d"(port)
@@ -40,8 +49,9 @@ void io_out8(unsigned short port,unsigned char value){
 
 unsigned char io_in8(unsigned short port){
     unsigned char ret = 0;
-    __asm__ __volatile__(   "inb    %%dx,   %0  \n\t"
-                "mfence         \n\t"
+    __asm__ __volatile__(   
+                "inb %%dx,%0  \n\t"
+                "mfence     \n\t"
                 :"=a"(ret)
                 :"d"(port)
                 :"memory");
@@ -56,9 +66,9 @@ void list_init(List *list){
 
 void list_add_to_behind(List *entry, List *newnode){
     newnode->next=entry->next;
-    entry->next=newnode;
-    newnode->next->prev=newnode;
     newnode->prev=entry;
+    newnode->next->prev=newnode;
+    entry->next=newnode;
     return;
 }
 

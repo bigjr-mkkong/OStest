@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "memory.h"
 #include "interrupt.h"
+#include "task.h"
 
 struct Global_Memory_Descriptor mman_struct;
 extern char _text;
@@ -34,16 +35,9 @@ void Start_Kernel(void){
 	mman_struct.end_brk=(unsigned long)&_end;
 
 	init_mem();
-
-	struct page * p=NULL;
-
-	p=alloc_pages(ZONE_NORMAL,16,PG_PTable_Maped|PG_Active|PG_Kernel);//assign 16 pages
-
-	for(int i=0;i<16;i++){
-		printk(WHITE,BLACK,"Page %d phyaddr:%x attri:%x\n",i,(p+i)->phy_addr,(p+i)->attribute);
-	}
 	
 	init_interrupt();
 
+	task_init();
 	while(1);
 }

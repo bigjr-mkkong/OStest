@@ -1,8 +1,9 @@
+#include "linkage.h"
 .section .text
 
 .globl _start
 
-_start:
+ENTRY(_start)
 
 	mov	$SelectorData64,%ax
 	mov	%ax,%ds
@@ -44,7 +45,7 @@ entry64:
 	movq %rax,%es
 	movq %rax,%gs
 	movq %rax,%ss
-	movq $0xffff800000007E00,%rsp
+	movq _stack_start(%rip),%rsp
 
 setup_idt:
 	leaq unrecord_int(%rip),%rdx			/*rdx: 64:0 offset of unrecord_int*/
@@ -163,6 +164,10 @@ unrecord_int:
 
 int_msg:
 	.asciz "Unknown interrupt or fault at RIP\n"
+
+ENTRY(_stack_start)
+	.quad	init_task_union + 32768
+
 /*======================page table=====================*/
 .align 8
 

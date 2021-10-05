@@ -6,11 +6,11 @@ all: system boot
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
 	bochs -f bochsrc
-	make clean
+	#make clean
 
-system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o
+system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o \
+	lib.o interrupt.o task.o \
 	-T Kernel.lds 
 
 head.o:	head.S
@@ -40,6 +40,9 @@ lib.o:lib.c
 
 interrupt.o:interrupt.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector interrupt.c
+
+task.o:task.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector task.c
 
 
 #------------------------bootup-------------------------------

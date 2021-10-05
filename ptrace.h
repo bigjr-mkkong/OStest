@@ -26,6 +26,6 @@ struct pt_regs{
 	unsigned long rflags;
 	unsigned long rsp;
 	unsigned long ss;
-}
+};
 
 #endif
