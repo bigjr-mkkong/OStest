@@ -13,6 +13,7 @@ extern char _edata;
 extern char _end;
 
 void Start_Kernel(void){
+
 	pos.Xresolution=1440;
 	pos.Yresolution=900;
 	pos.Xposition=pos.Yposition=0;
@@ -22,7 +23,7 @@ void Start_Kernel(void){
 	pos.FB_len=(pos.Xresolution*pos.Yresolution*4+PAGE_4K_SIZE-1)&(PAGE_4K_MASK);
 
 
-	load_TR(8);
+	load_TR(10);
 
 	set_tss64(0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
@@ -35,7 +36,8 @@ void Start_Kernel(void){
 	mman_struct.end_brk=(unsigned long)&_end;
 
 	init_mem();
-	
+
+	//printk(BLACK,WHITE,"\ntest test\n");//0c1047c0  call rdx ;rdx=0xffff8000_00108e5d
 	init_interrupt();
 
 	task_init();

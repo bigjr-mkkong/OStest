@@ -97,3 +97,8 @@ List *list_next(List *entry){
     if(entry->next!=NULL) return entry->next;
     return NULL;
 }
+
+void wrmsr(unsigned long address,unsigned long value){
+    __asm__ __volatile__\
+    ("wrmsr \n\t"::"d"(value >> 32),"a"(value & 0xffffffff),"c"(address):"memory"); 
+}

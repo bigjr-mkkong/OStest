@@ -87,9 +87,9 @@ setup_TSS64:
 	addq %rcx,%rax
 	addq $103,%rax
 	leaq LABEL_GDT64(%rip),%rdi
-	movq %rax,SelectorTss64_1(%rdi)
+	movq %rax,80(%rdi)
 	shrq $32,%rdx 								/*rdx:15:0 for tss & limit*/
-	movq %rdx,SelectorTss64_2(%rdi)
+	movq %rdx,88(%rdi)
 
 	/*mov $SelectorTss64_1,%ax
 	ltr	%ax*/
@@ -171,7 +171,7 @@ ENTRY(_stack_start)
 /*======================page table=====================*/
 .align 8
 
-.org 0x1000
+.org	0x1000
 
 __PML4E:
 
@@ -180,30 +180,30 @@ __PML4E:
 	.quad	0x102007
 	.fill	255,8,0
 
-.org 0x2000
+.org	0x2000
 
 __PDPTE:
 	
-	.quad	0x103003
+	.quad	0x103007	/* 0x103003 */
 	.fill	511,8,0
 
-.org 0x3000
+.org	0x3000
 
 __PDE:
 
-	.quad	0x000083	
-	.quad	0x200083
-	.quad	0x400083
-	.quad	0x600083
-	.quad	0x800083
-	.quad	0xe0000083		/*0x a00000*/
-	.quad	0xe0200083
-	.quad	0xe0400083
-	.quad	0xe0600083		/*0x1000000*/
-	.quad	0xe0800083
-	.quad	0xe0a00083
-	.quad	0xe0c00083
-	.quad	0xe0e00083
+	.quad	0x000087	
+	.quad	0x200087
+	.quad	0x400087
+	.quad	0x600087
+	.quad	0x800087		/* 0x800083 */
+	.quad	0xe0000087		/*0x a00000*/
+	.quad	0xe0200087
+	.quad	0xe0400087
+	.quad	0xe0600087		/*0x1000000*/
+	.quad	0xe0800087
+	.quad	0xe0a00087
+	.quad	0xe0c00087
+	.quad	0xe0e00087
 	.fill	499,8,0
 
 /*=============GDT=========================*/
@@ -215,18 +215,17 @@ __PDE:
 	LABEL_GDT64:				.quad	0x0000000000000000 /*0 0x00*/
 	LABEL_DESC_KERNEL_CODE64:	.quad	0x0020980000000000 /*1 0x08*/
 	LABEL_DESC_KERNEL_DATA64:	.quad	0x0000920000000000 /*2 0x10*/
-	LABEL_DESC_USER_CODE64:		.quad	0x0020f80000000000 /*3 0x18*/
-	LABEL_DESC_USER_DATA64:		.quad	0x0000f20000000000 /*4 0x20*/
-	.fill 3,8,0
-	LABEL_DESC_TSS64_1:			.quad	0x0000000000000000 /*7 0x40*/
-	LABEL_DESC_TSS64_2:			.quad	0x0000000000000000 /*8 0x48*/
-	.fill 7,8,0
+	LABEL_DESC_USER_CODE32:		.quad	0x0000000000000000 
+	LABEL_DESC_USER_DATA32:		.quad	0x0000000000000000
+	LABEL_DESC_USER_CODE64:		.quad	0x0020f80000000000
+	LABEL_DESC_USER_DATA64:		.quad	0x0000f20000000000
+	LABEL_DESC_KERNEL_CODE32:	.quad	0x00cf9a000000ffff
+	LABEL_DESC_KERNEL_DATA32:	.quad 	0x00cf92000000ffff
+	.fill 10,8,0
 GDT_END:
 		
 .equ	SelectorData64 , LABEL_DESC_KERNEL_DATA64 - LABEL_GDT64
 .equ	SelectorCode64 , LABEL_DESC_KERNEL_CODE64 - LABEL_GDT64
-.equ	SelectorTss64_1, LABEL_DESC_TSS64_1 - LABEL_GDT64
-.equ	SelectorTss64_2, LABEL_DESC_TSS64_2 - LABEL_GDT64
 
 GdtPtr:
 GdtLen:	.word	GDT_END - LABEL_GDT64 - 1
