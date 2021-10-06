@@ -6,7 +6,6 @@
 
 extern void ret_system_call(void);
 void user_level_function(){
-	while(1);
 	printk(RED,BLACK,"user task is running\n");
 	while(1);
 }
