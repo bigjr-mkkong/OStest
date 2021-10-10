@@ -5,25 +5,9 @@
 
 ENTRY(_start)
 
-	mov	$SelectorData64,%ax
-	mov	%ax,%ds
-	mov	%ax,%es
-	mov	%ax,%fs
-	mov	%ax,%ss
-	mov	$0x7E00,%esp
-
 	lgdt	GdtPtr(%rip)
 
 	lidt	IdtPtr(%rip)
-/*
-	mov	$SelectorData64,%ax
-	mov	%ax,%ds
-	mov	%ax,%es
-	mov	%ax,%fs
-	mov	%ax,%gs
-	mov	%ax,%ss
-
-	movq $0x7E00,%rsp*/
 
 /*====================load cr3*/
 

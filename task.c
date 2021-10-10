@@ -3,11 +3,25 @@
 #include "gate.h"
 #include "memory.h"
 
-
 extern void ret_system_call(void);
+extern void system_call(void);
+
 void user_level_function(){
-	printk(RED,BLACK,"user task is running\n");
+	long ret = 0;
+	char str[]="Hello World!\n";
+
+	__asm__	__volatile__(
+					"leaq sysexit_return_address(%%rip),%%rdx	\n\t"
+					"movq %%rsp,%%rcx	\n\t"
+					"sysenter			\n\t"
+					"sysexit_return_address:	\n\t"
+					:"=a"(ret):"0"(1),"D"(str):"memory"
+					);	
 	while(1);
+}
+
+unsigned long  system_call_function(struct pt_regs * regs){
+	return system_call_table[regs->rax](regs);
 }
 
 unsigned long do_execve(struct pt_regs *regs){
@@ -19,7 +33,7 @@ unsigned long do_execve(struct pt_regs *regs){
 
 	printk(RED,BLACK,"do_execve task is running\n");
 
-	memcpy(user_level_function,(void *)0x800000,2048);
+	memcpy(user_level_function,(void *)0x800000,1024);
 
 	return 0;
 }
@@ -99,6 +113,8 @@ void task_init(){
 	init_mm.start_stack=_stack_start;
 
 	wrmsr(0x174,KERNEL_CS);
+	wrmsr(0x175,current->thread->rsp0);
+	wrmsr(0x176,(unsigned long)system_call);
 
 	set_tss64(init_tss[0].rsp0,init_tss[0].rsp1,init_tss[0].rsp2,init_tss[0].ist1,\
 		init_tss[0].ist2,init_tss[0].ist3,init_tss[0].ist4,init_tss[0].ist5,\

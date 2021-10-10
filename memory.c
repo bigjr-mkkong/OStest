@@ -27,7 +27,7 @@ unsigned long page_init(struct page* p, unsigned long flags){
 
 void init_mem(){
 	unsigned long tot=0 ;
-	struct int15_e820 *p=NULL;	
+	struct int15_e820 *p=NULL;
 	printk(WHITE,BLACK,"Display Physics Memory Distribution\n");
 	p=(struct int15_e820*)0xffff800000007e00;
 
