@@ -37,8 +37,8 @@ void init_mem(){
 			tot+=p->length;
 		}
 
-		mman_struct.e820[i].address+=p->address;//initialize the basic mm info in mman_struct
-		mman_struct.e820[i].length+=p->length;
+		mman_struct.e820[i].address=p->address;//initialize the basic mm info in mman_struct
+		mman_struct.e820[i].length=p->length;
 		mman_struct.e820[i].type=p->type;
 		mman_struct.e820_length=i;
 
