@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "interrupt.h"
 #include "task.h"
+#include "cpu.h"
 
 struct Global_Memory_Descriptor mman_struct;
 extern char _text;
@@ -29,6 +30,7 @@ void Start_Kernel(void){
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
 	set_sys_int();
+	init_cpu();
 
 	mman_struct.start_code=(unsigned long)&_text;
 	mman_struct.end_code=(unsigned long)&_etext;

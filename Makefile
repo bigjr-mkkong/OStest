@@ -8,9 +8,9 @@ all: system boot
 	bochs -f bochsrc
 	#make clean
 
-system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o
+system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o task.o \
+	lib.o interrupt.o task.o cpu.o \
 	-T Kernel.lds 
 
 head.o:	head.S
@@ -43,6 +43,9 @@ interrupt.o:interrupt.c
 
 task.o:task.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector task.c
+
+cpu.o:cpu.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector cpu.c
 
 
 #------------------------bootup-------------------------------
