@@ -210,6 +210,32 @@ int ZONE_NORMAL_INDEX=0;//mark start of NORMAL zone
 int ZONE_UNMAPPED_INDEX=0;//mark start of UNMAPPED ZONE
 unsigned long* Global_CR3=NULL;
 
+struct Slab_cache{
+	unsigned long size;
+	unsigned long total_using;
+	unsigned long total_free;
+	struct Slab *cache_pool;
+	struct Slab *cache_dma_pool;
+
+	void *(* constructor)(void * Vaddress, unsigned long arg);
+	void *(* destructor)(void * Vaddress, unsigned long arg);
+};
+
+struct Slab{
+	struct List list;
+	struct page *page;
+	unsigned long using_count;
+	unsigned long free_count;
+	void *Vaddress;
+
+	unsigned long color_length;
+	unsigned long color_count;
+
+	unsigned long *color_map;
+};
+
+#define SIZEOF_LONG_ALIGN(size) ((size+sizeof(long)-1)&~(sizeof(long)-1))
+
 void init_mem();
 
 void flush_tlb();

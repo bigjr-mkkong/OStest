@@ -276,3 +276,83 @@ struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
 	}
 	return NULL;
 }
+
+void free_pages(struct page *page,int number){
+	if(page==NULL){
+		printk(RED,BLACK,"free_pages() ERROR: page is invalid\n");
+		return ;
+	}	
+
+	if(number>=64||number<=0){
+		printk(RED,BLACK,"free_pages() ERROR: number is invalid\n");
+		return ;	
+	}
+	
+	for(int i=0;i<number;i++,page++){
+		*(mman_struct.bits_map+((page->phy_addr>>PAGE_2M_SHIFT)>>6))&=
+			~(1UL<<(page->phy_addr>>PAGE_2M_SHIFT)%64);
+		page->zone_struct->page_using_count--;
+		page->zone_struct->page_free_count++;
+		page->attribute = 0;
+	}
+}
+
+
+struct Slab_cache *slab_create(unsigned long size,\
+	void *(* constructor)(void *Vaddress, unsigned long arg),\
+	void *(* destructor)(void *Vaddress, unsigned long arg),unsigned long arg){
+	
+	struct Slab_cache *slab_cache=NULL;
+	slab_cache=(struct Slab_cache*)kmalloc(sizeof(struct Slab_cache),0);
+
+	if(slab_cache==NULL){
+		printk(RED,BLACK,"slab_create: slab_cache=kmalloc(): NULL");
+		return NULL;
+	}
+	memset(slab_cache,0,sizeof(struct Slab_cache));
+
+	slab_cache->size=SIZEOF_LONG_ALIGN(size);
+	slab_cache->total_using=0;
+	slab_cache->total_free=0;
+	slab_cache->cache_pool=(struct Slab*)kmalloc(sizeof(struct Slab),0);
+
+	if(slab_cache->cache_pool==NULL){
+		printk(RED,BLACK,"slab_create(): slab_cache->cache_pool=kmalloc(): NULL");
+		kfree(slab_cache);
+		return NULL;
+	}
+	memset(slab_cache->cache_pool,0,sizeof(struct Slab));
+
+	slab_cache->cache_dma_pool=NULL;
+	slab_cache->constructor=constructor;
+	slab_cache->destructor=destructor;
+
+	list_init(&slab_cache->cache_pool->list);
+
+	slab_cache->cache_pool->page=alloc_pages(ZONE_NORMAL,1,0);
+	if(slab_cache->cache_pool->page==NULL){
+		printk(RED,BLACK,"slab_create(): slab_cache->cache_pool->page=alloc_pages(): NULL");
+		kfree(slab_cache->cache_pool);
+		kfree(slab_cache);
+		return NULL;
+	}
+	page_init(slab_cache->cache_pool->page,PG_Kernel);
+	slab_cache->cache_pool->using_count=0;
+	slab_cache->cache_pool->free_count=PAGE_2M_SIZE/slab_cache->size;
+	slab_cache->total_free=slab_cache->cache_pool->free_count;
+	slab_cache->cache_pool->Vaddress=phy2vir(slab_cache->cache_pool->page->phy_addr);
+	slab_cache->cache_pool->color_count=slab_cache->cache_pool->free_count;
+	slab_cache->cache_pool->color_length=\
+		((slab_cache->cache_pool->free_count+sizeof(unsigned long)*8-1)>>6)<<3;
+	slab_cache->cache_pool->color_map=(unsigned long *)\
+		kmalloc(slab_cache->cache_pool->color_length,0);
+	if(slab_cache->cache_pool->color_map==NULL){
+		printk(RED,BLACK,"slab_create(): slab_cache->cache_pool-color_map=kmalloc(): NULL");
+		free_pages(slab_cache->cache_pool->page,1);
+		kfree(slab_cache->cache_pool);
+		kfree(slab_cache);
+		return NULL;
+	}
+	memset(slab_cache->cache_pool->color_map,0,slab_cache->cache_pool->color_length);
+	return slab_cache;
+}
