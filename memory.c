@@ -100,9 +100,6 @@ void init_mem(){
 	memset(mman_struct.zones_struct,0x00,mman_struct.zones_length);
 
 
-
-
-
 	for(int i=0;i<mman_struct.e820_length;i++){//go through every mm segment in e820
 		unsigned long start,end;
 		struct page *p;
@@ -356,3 +353,16 @@ struct Slab_cache *slab_create(unsigned long size,\
 	memset(slab_cache->cache_pool->color_map,0,slab_cache->cache_pool->color_length);
 	return slab_cache;
 }
+
+unsigned long slab_destroy(struct Slab_cache *slab_cache){
+
+}
+
+void *slab_malloc(struct Slab_cache* slab_cache, unsigned long arg){
+
+}
+
+unsigned long slab_free(struct Slab_cache *slab_cache, void *address, unsigned long arg){
+
+}
+
