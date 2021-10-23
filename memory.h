@@ -145,6 +145,8 @@ typedef struct {unsigned long pt;} pt_t;
 //
 #define PG_K_Share_To_U	(1 << 8)
 
+#define PG_Shared	(1 << 4)
+
 //
 #define PG_Slab		(1 << 9)
 

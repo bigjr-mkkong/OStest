@@ -3,27 +3,39 @@
 #include "printk.h"
 
 unsigned long page_init(struct page* p, unsigned long flags){
-	if(!p->attribute){
-		*(mman_struct.bits_map+((p->phy_addr>>PAGE_2M_SHIFT)>>6))|=\
-		1UL<<(p->phy_addr>>PAGE_2M_SHIFT)%64; //regist page p in bitmap
-		p->attribute=flags;
-		p->ref_count++;//refresh some count value for paging
-		p->zone_struct->page_using_count++;
-		p->zone_struct->page_free_count--;
-		p->zone_struct->total_page_link++;
-	}else if((p->attribute&PG_Referenced)||(p->attribute&PG_K_Share_To_U)||\
-			 (flags&PG_Referenced)||(flags&PG_K_Share_To_U)){
-		p->attribute|flags;
+	p->attribute|=flags;
+	if(!p->ref_count||(p->attribute&PG_Shared)){
 		p->ref_count++;
 		p->zone_struct->total_page_link++;
-	}else{
-		*(mman_struct.bits_map+((p->phy_addr>>PAGE_2M_SHIFT)>>6))|=\
-		1UL<<(p->phy_addr>>PAGE_2M_SHIFT)%64;
-		p->attribute|flags;
 	}
-	return 0;
+	return 1;
 }
 
+unsigned long page_clean(struct page *p){
+	p->ref_count--;
+	p->zone_struct->total_page_link--;
+	if(!p->ref_count){
+		p->attribute&=PG_PTable_Maped;
+	}
+	return 1;
+}
+
+unsigned long get_page_attribute(struct page *p){
+	if(p==NULL){
+		printk(RED,BLACK,"get_page_attribute(): p==NULL\n");
+		return 0;
+	}
+	return p->attribute;
+}
+
+unsigned long set_page_attribute(struct page *p, unsigned long flags){
+	if(p==NULL){
+		printk(RED,BLACK,"set_page_attribute(): p==NULL\n");
+		return 0;
+	}
+	p->attribute=flags;
+	return 1;
+}
 
 void init_mem(){
 	unsigned long tot=0 ;
@@ -150,8 +162,8 @@ void init_mem(){
 	/*init first pages in to 0*/
 	mman_struct.pages_struct->zone_struct=mman_struct.zones_struct;
 	mman_struct.pages_struct->phy_addr=0UL;
-	mman_struct.pages_struct->attribute=0;
-	mman_struct.pages_struct->ref_count=0;
+	set_page_attribute(mman_struct.pages_struct,PG_PTable_Maped|PG_Kernel_Init|PG_Kernel);
+	mman_struct.pages_struct->ref_count=1;
 	mman_struct.pages_struct->age=0;
 
 	
@@ -162,6 +174,7 @@ void init_mem(){
 
 	ZONE_DMA_INDEX=0;
 	ZONE_NORMAL_INDEX=0;
+	ZONE_UNMAPPED_INDEX=0;
 
 /*=======find out the last zone which included in to 1GB mem=================*/
 	int end_zone_num;
@@ -355,6 +368,31 @@ struct Slab_cache *slab_create(unsigned long size,\
 }
 
 unsigned long slab_destroy(struct Slab_cache *slab_cache){
+	struct Slab *slab_p=slab_cache->cache_pool;
+	struct Slab *tmp_slab=NULL;
+
+	if(slab_cache->total_using!=0){
+		printk(RED,BLACK,"slab_cache->total_using != 0\n");
+		return 0;
+	}
+	while(!list_is_empty(&slab_p->list)){
+		tmp_slab=slab_p;
+		slab_p=container_of(list_next(&slab_p->list),struct Slab,list);
+		list_del(&tmp_slab->list);
+		
+		kfree(tmp_slab->color_map);
+		page_clean(tmp_slab->page);
+		
+		free_pages(tmp_slab->page,1);
+		kfree(tmp_slab);
+	}
+	kfree(slab_p->color_map);
+	page_clean(slab_p->page);
+		
+	free_pages(slab_p->page,1);
+	kfree(slab_p);
+	kfree(slab_cache);
+	return 1;
 
 }
 
