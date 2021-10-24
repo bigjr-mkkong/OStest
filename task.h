@@ -21,7 +21,6 @@ extern unsigned long _stack_start;
 
 extern void ret_from_intr();
 
-
 #define TASK_RUNNING		(1 << 0)
 #define TASK_INTERRUPTIBLE	(1 << 1)
 #define	TASK_UNINTERRUPTIBLE	(1 << 2)
@@ -98,6 +97,7 @@ struct thread_struct init_thread;
 	.signal=0,\
 	.priority=0\
 }\
+
 
 union task_union init_task_union __attribute__((__section__(".data.init_task")))=\
 {INIT_TASK(init_task_union.task)};

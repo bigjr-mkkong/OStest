@@ -1,12 +1,11 @@
 # OStest
 Still a testing operating system, just for fun.
 
-
 TODO:
 
-slab_malloc()
+slab_init()
 
-slab_free()
+expand page table range
 
 kmalloc()
 

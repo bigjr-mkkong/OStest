@@ -397,10 +397,139 @@ unsigned long slab_destroy(struct Slab_cache *slab_cache){
 }
 
 void *slab_malloc(struct Slab_cache* slab_cache, unsigned long arg){
+	struct Slab *slab_p=slab_cache->cache_pool;
+	struct Slab *tmp_slab=NULL;
+	if(slab_cache->total_free=0){
+		tmp_slab=(struct Slab*)kmalloc(sizeof(struct Slab),0);
+		if(tmp_slab==NULL){
+			printk(RED,BLACK,"slab_malloc(): tmp_slab=kmalloc()==NULL");
+			return NULL;
+		}
+		memset(tmp_slab,0,sizeof(struct Slab));
+		list_init(&tmp_slab->list);
+		tmp_slab->page=alloc_pages(ZONE_NORMAL,1,0);
+		if(tmp_slab->page==NULL){
+			printk(RED,BLACK,"slab_malloc(): tmp_slab->page=alloc_pages()==NULL");
+			kfree(tmp_slab);
+			return NULL;
+		}
+		page_init(tmp_slab->page,PG_Kernel);
+		tmp_slab->using_count=0;
+		tmp_slab->free_count=PAGE_2M_SIZE/slab_cache->size;
+		tmp_slab->Vaddress=phy2vir(tmp_slab->page->phy_addr);
+		tmp_slab->color_count=tmp_slab->free_count;
+		tmp_slab->color_length=((tmp_slab->color_count+sizeof(unsigned long)*8-1)>>6)<<3;
+		tmp_slab->color_map=(unsigned long*)kmalloc(tmp_slab->color_length,0);
 
+		if(tmp_slab->color_map==NULL){
+			printk(RED,BLACK,"slab_malloc(): tmp_slab->color_map=kmalloc()==NULL");
+			free_pages(tmp_slab->page,1);
+			kfree(tmp_slab);
+			return NULL;
+		}
+		memset(tmp_slab->color_map,0,tmp_slab->color_length);
+		list_add_to_behind(&slab_cache->cache_pool->list,tmp_slab->list);
+		slab_cache->total_free+=tmp_slab->color_count;
+
+		for(int i=0;i<tmp_slab->color_count;i++){
+			if( (*(tmp_slab->color_map+(i>>6)) & (1UL<<(i%64)))==0){
+				*(tmp_slab->color_map+(i>>6)) |= (1UL<<(i%64));
+				
+				tmp_slab->using_count++;
+				tmp_slab->free_count--;
+
+				slab_cache->total_using++;
+				slab_cache->total_free--;
+
+				if(slab_cache->constructor!=NULL){
+					return slab_cache->\
+						constructor((char*)tmp_slab->Vaddress+slab_cache->size*i,arg);
+				}else{
+					return (void*)((char*)tmp_slab->Vaddress+slab_cache->size*i);
+				}
+			}
+		}
+	}else{
+		do{
+			if(slab_p->free_count==0){
+				slab_p=container_of(list_next(&slab_p->list),struct Slab,list);
+				continue;
+			}
+			for(int i=0;i<slab_p->color_count;i++){
+				if(*(slab_p->color_map+(i>>6))==0xffffffffffffffffUL){
+					i+=63;
+					continue;
+				}
+				if( (*(slab_p->color_map+(i>>6)) & (1UL<<(i%64)))==0){
+					*(slab_p->color_map+(i>>6)) |= (1UL<<(i%64));
+
+					slab_p->using_count++;
+					slab_p->free_count--;
+
+					slab_cache->total_using++;
+					slab_cache->total_free--;
+
+					if(slab_cache->constructor!=NULL){
+						return slab_cache->\
+							constructor((char*)slab_p->Vaddress+slab_cache->size*i,arg);
+					}else{
+						return (void*)((char*)slab_p->Vaddress+slab_cache->size*i);
+					}
+				}
+			}
+		}while(slab_p!=slab_cache->cache_pool);
+	}
+	printk(RED,BLACK,"slab_malloc(): cannot alloc\n");
+	if(tmp_slab!=NULL){
+		list_del(&tmp_slab->list);
+		kfree(tmp_slab->color_map);
+		page_clean(tmp_slab->page);
+		free_pages(tmp_slab->page,1);
+		kfree(tmp_slab);
+	}
+	return NULL;
 }
 
 unsigned long slab_free(struct Slab_cache *slab_cache, void *address, unsigned long arg){
+	struct Slab * slab_p=slab_cache->cache_pool;
+	int index=0;
 
+	do{
+		if((slab_p->Vaddress<=address)&&(address<slab_p->Vaddress+PAGE_2M_SIZE)){
+			index=(address-slab_p->Vaddress)/slab_cache->size;
+			*(slab_p->color_map+(index >> 6)) ^= (1UL<<index % 64);
+			slab_p->free_count++;
+			slab_p->using_count--;
+
+			slab_cache->total_using--;
+			slab_cache->total_free++;
+			
+			if(slab_cache->destructor!=NULL){
+				slab_cache->\
+					destructor((char *)slab_p->Vaddress+slab_cache->size*index,arg);
+			}
+
+			if((slab_p->using_count==0)&&(slab_cache->total_free>=slab_p->color_count*3/2)){
+				list_del(&slab_p->list);
+				slab_cache->total_free-=slab_p->color_count;
+
+				kfree(slab_p->color_map);
+				
+				page_clean(slab_p->page);
+				free_pages(slab_p->page,1);
+				kfree(slab_p);				
+			}
+
+			return 1;
+		}else{
+			slab_p=container_of(list_next(&slab_p->list),struct Slab,list);
+			continue;	
+		}		
+
+	}while(slab_p!=slab_cache->cache_pool);
+
+	printk(RED,BLACK,"slab_free(): address not in slab\n");
+
+	return 0;
 }
 
