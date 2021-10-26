@@ -591,9 +591,13 @@ unsigned long slab_init(){
 	struct page *p=NULL;
 	unsigned long *vir=NULL;
 	unsigned long tmp_address=mman_struct.end_of_struct;
-	unsigned long i;
+	unsigned long i;//i is like a temptaion var in function
 
 	for(i=0;i<16;i++){
+		/*
+		assign space and do initialization works
+		for first Slab struct in preset Slab_cache
+		*/
 		kmalloc_cache_size[i].cache_pool=(struct Slab*)mman_struct.end_of_struct;
 		mman_struct.end_of_struct+=sizeof(struct Slab)+sizeof(long)*10;
 

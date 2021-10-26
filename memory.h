@@ -212,30 +212,42 @@ int ZONE_NORMAL_INDEX=0;//mark start of NORMAL zone
 int ZONE_UNMAPPED_INDEX=0;//mark start of UNMAPPED ZONE
 unsigned long* Global_CR3=NULL;
 
+/*
+struct Slab_cache is a cache to store the slab
+*/
 struct Slab_cache{
-	unsigned long size;
+	unsigned long size;//size of whole slab in certain Slab_cache
 	unsigned long total_using;
 	unsigned long total_free;
-	struct Slab *cache_pool;
-	struct Slab *cache_dma_pool;
+	struct Slab *cache_pool;//first slab struct
+	struct Slab *cache_dma_pool;//first slab struct in DMA memory area
 
 	void *(* constructor)(void * Vaddress, unsigned long arg);
 	void *(* destructor)(void * Vaddress, unsigned long arg);
 };
 
 struct Slab{
-	struct List list;
-	struct page *page;
+	struct List list;//list to connect each 
+	struct page *page;//assigned page of each slab
 	unsigned long using_count;
 	unsigned long free_count;
 	void *Vaddress;
 
 	unsigned long color_length;
-	unsigned long color_count;
+	/*
+	length is the space taken by color map, should align to 8 so always bigger than
+	color_count
+	*/
+	unsigned long color_count;//number of bits in color map
 
 	unsigned long *color_map;
+	//a map to represent the avaliability of all pages in one slab
 };
 
+
+/*
+Preset Slab_cache struct in order to support the kmalloc()
+*/
 struct Slab_cache kmalloc_cache_size[16]={
 {32 	,0,0,NULL,NULL,NULL,NULL},
 {64 	,0,0,NULL,NULL,NULL,NULL},
