@@ -307,6 +307,57 @@ void free_pages(struct page *page,int number){
 	}
 }
 
+void *kmalloc(unsigned long size, unsigned long gpf_flags){
+	struct Slab *slab=NULL;
+	int i;
+	if(size>1048576){
+		printk(RED,BLACK,"kmalloc(): cannot allocate memory size over 1048576\n");
+		return NULL;
+	}
+	for(i=0;i<16;i++){
+		if(kmalloc_cache_size[i].size>=size){
+			slab=kmalloc_cache_size[i].cache_pool;//<---------------
+			break;
+		}
+	}
+	if(kmalloc_cache_size[i].total_free!=0){
+		do{
+			if(slab->free_count==0){
+				slab=container_of(list_next(&slab->list),struct Slab,list);
+			}else{
+				break;
+			}
+		}while(slab!=kmalloc_cache_size[i].cache_pool);
+	}else{
+		slab=kmalloc_create(kmalloc_cache_size[i].size);
+		if(slab==NULL){
+			printk(BLUE,BLACK,"kmalloc(): kmalloc_create()==NULL\n");
+			return NULL;
+		}
+		kmalloc_cache_size[i].total_free+=slab->color_count;
+		printk(BLUE,BLACK,"kmalloc(): kmalloc_create(): create size: %x",kmalloc_cache_size[i]);
+		list_add_to_before(&kmalloc_cache_size[i].cache_pool->list,&slab->list);		
+	}
+	for(int j=0;j<slab->color_count;j++){
+		if(*(slab->color_map+(j>>6))==0xffffffffffffffffUL){
+			j+=63;
+			continue;
+		}
+		if(!(*(slab->color_map+(j>>6))&(1UL<<(j%64)))){
+			*(slab->color_map+(j>>6))|= 1UL<<(j%64);
+			slab->using_count++;
+			slab->free_count--;
+
+			kmalloc_cache_size[i].total_free--;
+			kmalloc_cache_size[i].total_using++;
+			return (void*)((char*)slab->Vaddress+kmalloc_cache_size[i].size*j);
+		}
+	}
+	printk(RED,BLACK,"kmalloc(): No memory can be allocate\n");
+	return NULL;
+}
+
+
 
 struct Slab_cache *slab_create(unsigned long size,\
 	void *(* constructor)(void *Vaddress, unsigned long arg),\
