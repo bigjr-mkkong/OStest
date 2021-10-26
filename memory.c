@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "printk.h"
 
+
 unsigned long page_init(struct page* p, unsigned long flags){
 	p->attribute|=flags;
 	if(!p->ref_count||(p->attribute&PG_Shared)){
@@ -306,6 +307,8 @@ void free_pages(struct page *page,int number){
 		page->attribute = 0;
 	}
 }
+#ifdef __DEBUG__
+
 
 void *kmalloc(unsigned long size, unsigned long gpf_flags){
 	struct Slab *slab=NULL;
@@ -644,3 +647,4 @@ unsigned long slab_init(){
 	}
 	return 1;
 }
+#endif

@@ -20,9 +20,8 @@ void Start_Kernel(void){
 	pos.Xposition=pos.Yposition=0;
 	pos.Xcharsize=8;
 	pos.Ycharsize=16;
-	pos.FB_addr=(int *)0xffff800000300000;
+	pos.FB_addr=(int *)0xffff800003000000;
 	pos.FB_len=(pos.Xresolution*pos.Yresolution*4+PAGE_4K_SIZE-1)&(PAGE_4K_MASK);
-
 	//load TR with selector defined in GDT
 	load_TR(10);
 
