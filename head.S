@@ -179,16 +179,38 @@ __PDE:
 	.quad	0x200087
 	.quad	0x400087
 	.quad	0x600087
-	.quad	0x800087		/* 0x800083 */
-	.quad	0xe0000087		/*0x a00000*/
+	.quad	0x800087  	/* 0x800083 */
+	.quad	0xa00087
+	.quad	0xc00087
+	.quad	0xe00087
+	.quad	0x1000087
+	.quad	0x1200087
+	.quad	0x1400087
+	.quad	0x1600087
+	.quad	0x1800087
+	.quad	0x1a00087
+	.quad	0x1c00087
+	.quad	0x1e00087
+	.quad	0x2000087
+	.quad	0x2200087
+	.quad	0x2400087
+	.quad	0x2600087
+	.quad	0x2800087
+	.quad	0x2a00087
+	.quad	0x2c00087
+	.quad	0x2e00087
+
+
+
+	.quad	0xe0000087  	/*0x 3000000*/
 	.quad	0xe0200087
 	.quad	0xe0400087
-	.quad	0xe0600087		/*0x1000000*/
+	.quad	0xe0600087
 	.quad	0xe0800087
 	.quad	0xe0a00087
 	.quad	0xe0c00087
 	.quad	0xe0e00087
-	.fill	499,8,0
+	.fill	480,8,0
 
 /*=============GDT=========================*/
 

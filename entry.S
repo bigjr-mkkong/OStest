@@ -149,6 +149,10 @@ error_code:
 
 	jmp	ret_from_exception
 
+/*
+If fault do not have error code, push $0
+*/
+
 ENTRY(divide_error)
 	pushq $0 //0x10406e
 	pushq %rax
@@ -164,7 +168,7 @@ ENTRY(debug)
 	xchgq %rax,(%rsp)
 	jmp	error_code
 
-ENTRY(nmi) /*nmi cannot use normal stack to handle with?*/
+ENTRY(nmi)
 	pushq %rax
 	cld
 	pushq %rax

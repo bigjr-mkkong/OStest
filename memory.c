@@ -533,3 +533,63 @@ unsigned long slab_free(struct Slab_cache *slab_cache, void *address, unsigned l
 	return 0;
 }
 
+unsigned long slab_init(){
+	struct page *p=NULL;
+	unsigned long *vir=NULL;
+	unsigned long tmp_address=mman_struct.end_of_struct;
+	unsigned long i;
+
+	for(i=0;i<16;i++){
+		kmalloc_cache_size[i].cache_pool=(struct Slab*)mman_struct.end_of_struct;
+		mman_struct.end_of_struct+=sizeof(struct Slab)+sizeof(long)*10;
+
+		list_init(&kmalloc_cache_size[i].cache_pool->list);
+		//init sizeof struct Slab of cache size
+
+		kmalloc_cache_size[i].cache_pool->using_count=0;
+		kmalloc_cache_size[i].cache_pool->free_count=PAGE_2M_SIZE/kmalloc_cache_size[i].size;
+		kmalloc_cache_size[i].cache_pool->color_length=\
+			((PAGE_2M_SIZE/kmalloc_cache_size[i].size+sizeof(unsigned long)*8-1)>>6)<<3;
+
+		kmalloc_cache_size[i].cache_pool->color_count=\
+			kmalloc_cache_size[i].cache_pool->free_count;
+
+		kmalloc_cache_size[i].cache_pool->color_map=(unsigned long*)mman_struct.end_of_struct;
+		mman_struct.end_of_struct=(unsigned long)\
+			((mman_struct.end_of_struct+kmalloc_cache_size[i].cache_pool->color_length+\
+			sizeof(long)*10)>>6)<<3;//<---------------here
+
+		memset(kmalloc_cache_size[i].cache_pool->color_map,0,\
+			kmalloc_cache_size[i].cache_pool->color_length);//<----------here
+
+		kmalloc_cache_size[i].total_free=kmalloc_cache_size[i].cache_pool->color_count;
+		kmalloc_cache_size[i].total_using=0;
+	}
+
+	i=vir2phy(mman_struct.end_of_struct)>>PAGE_2M_SHIFT;
+	for(unsigned long j=PAGE_2M_ALIGN(vir2phy(tmp_address))>>PAGE_2M_SHIFT;j<=i;j++){
+		p=mman_struct.pages_struct+j;
+		
+		*(mman_struct.bits_map+((p->phy_addr>>PAGE_2M_SHIFT)>>6)) |= \
+			1UL<<(p->phy_addr>>PAGE_2M_SHIFT)%64;
+
+		p->zone_struct->page_using_count++;
+		p->zone_struct->page_free_count--;
+		page_init(p,PG_PTable_Maped|PG_Kernel_Init|PG_Kernel);
+	}
+
+	for(i=0;i<16;i++){
+		vir=(unsigned long*)((mman_struct.end_of_struct+PAGE_2M_SIZE*(i+1)-1)&PAGE_2M_MASK);
+		p=vir2_2M_page(vir);
+
+		*(mman_struct.bits_map+((p->phy_addr>>PAGE_2M_SHIFT)>>6)) |= 1UL<<(p->phy_addr>>PAGE_2M_SHIFT)%64;
+		p->zone_struct->page_using_count++;
+		p->zone_struct->page_free_count--;
+
+		page_init(p,PG_PTable_Maped|PG_Kernel_Init|PG_Kernel);
+
+		kmalloc_cache_size[i].cache_pool->page=p;
+		kmalloc_cache_size[i].cache_pool->Vaddress=vir;
+	}
+	return 1;
+}

@@ -22,9 +22,9 @@
 #define vir2phy(addr)	((unsigned long)(addr) - PAGE_OFFSET)
 #define phy2vir(addr)	((unsigned long *)((unsigned long)(addr) + PAGE_OFFSET))
 
-#define Virt_To_2M_Page(kernel_addr)	((unsigned long)(addr)-PAGE_OFFSET)
+#define vir2_2M_page(kernel_addr)	((unsigned long)(kernel_addr)-PAGE_OFFSET)
 
-#define Phy_to_2M_Page(kernel_addr)		((unsigned long*)(unsigned long)(addr)+PAGE_OFFSET)
+#define phy2_2M_page(kernel_addr) 	((unsigned long*)(unsigned long)(kernel_addr)+PAGE_OFFSET)
 
 
 #define ZONE_DMA		1
@@ -234,6 +234,25 @@ struct Slab{
 	unsigned long color_count;
 
 	unsigned long *color_map;
+};
+
+struct Slab_cache kmalloc_cache_size[16]={
+{32 	,0,0,NULL,NULL,NULL,NULL},
+{64 	,0,0,NULL,NULL,NULL,NULL},
+{128 	,0,0,NULL,NULL,NULL,NULL},
+{256 	,0,0,NULL,NULL,NULL,NULL},
+{512  	,0,0,NULL,NULL,NULL,NULL},
+{1024  	,0,0,NULL,NULL,NULL,NULL},//1KB
+{2048  	,0,0,NULL,NULL,NULL,NULL},
+{4096  	,0,0,NULL,NULL,NULL,NULL},//4KB
+{8192  	,0,0,NULL,NULL,NULL,NULL},
+{16384	,0,0,NULL,NULL,NULL,NULL},
+{32768	,0,0,NULL,NULL,NULL,NULL},
+{65536	,0,0,NULL,NULL,NULL,NULL},//64KB
+{131072	,0,0,NULL,NULL,NULL,NULL},//128KB
+{262144	,0,0,NULL,NULL,NULL,NULL},
+{524288	,0,0,NULL,NULL,NULL,NULL},
+{1048576,0,0,NULL,NULL,NULL,NULL},//1MB
 };
 
 #define SIZEOF_LONG_ALIGN(size) ((size+sizeof(long)-1)&~(sizeof(long)-1))

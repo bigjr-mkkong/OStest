@@ -14,22 +14,24 @@ extern char _edata;
 extern char _end;
 
 void Start_Kernel(void){
-
+	//setting screen infomatoin
 	pos.Xresolution=1440;
 	pos.Yresolution=900;
 	pos.Xposition=pos.Yposition=0;
 	pos.Xcharsize=8;
 	pos.Ycharsize=16;
-	pos.FB_addr=(int *)0xffff800000a00000;
+	pos.FB_addr=(int *)0xffff800000300000;
 	pos.FB_len=(pos.Xresolution*pos.Yresolution*4+PAGE_4K_SIZE-1)&(PAGE_4K_MASK);
 
-
+	//load TR with selector defined in GDT
 	load_TR(10);
 
 	set_tss64(0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
+
 	set_sys_int();
+	
 	init_cpu();
 
 	mman_struct.start_code=(unsigned long)&_text;
@@ -41,7 +43,6 @@ void Start_Kernel(void){
 
 	//printk(BLACK,WHITE,"\ntest test\n");//0c1047c0  call rdx ;rdx=0xffff8000_00108e5d
 	init_interrupt();
-
 	task_init();
 	while(1);
 }
