@@ -118,38 +118,20 @@ typedef struct {unsigned long pt;} pt_t;
 
 ////struct page attribute (alloc_pages flags)
 
-//
+//mapped=1 or unmapped=0
 #define PG_PTable_Maped	(1 << 0)
 
-//
+//init-code=1 or normal-code/data=0
 #define PG_Kernel_Init	(1 << 1)
 
-//
-#define PG_Referenced	(1 << 2)
-
-//
-#define PG_Dirty	(1 << 3)
-
-//
-#define PG_Active	(1 << 4)
-
-//
-#define PG_Up_To_Date	(1 << 5)
-
-//
+//device=1 or memory=0
 #define PG_Device	(1 << 6)
 
-//
+//kernel=1 or user=0
 #define PG_Kernel	(1 << 7)
 
-//
-#define PG_K_Share_To_U	(1 << 8)
-
+//shared=1 or single-use=0
 #define PG_Shared	(1 << 4)
-
-//
-#define PG_Slab		(1 << 9)
-
 
 struct int15_e820{
 	unsigned long address;
@@ -216,7 +198,7 @@ unsigned long* Global_CR3=NULL;
 struct Slab_cache is a cache to store the slab
 */
 struct Slab_cache{
-	unsigned long size;//size of whole slab in certain Slab_cache
+	unsigned long size;//size of each slab in certain Slab_cache
 	unsigned long total_using;
 	unsigned long total_free;
 	struct Slab *cache_pool;//first slab struct
@@ -272,6 +254,26 @@ struct Slab_cache kmalloc_cache_size[16]={
 void init_mem();
 
 void flush_tlb();
+
 struct page* alloc_pages(int zone_select,int number,unsigned long page_flags);
 
+void free_pages(struct page *page,int number);
+
+void *kmalloc(unsigned long size, unsigned long gpf_flags);
+
+struct Slab* kmalloc_create(unsigned long size);
+
+unsigned long kfree(void *adress);
+
+struct Slab_cache *slab_create(unsigned long size,\
+	void *(* constructor)(void *Vaddress, unsigned long arg),\
+	void *(* destructor)(void *Vaddress, unsigned long arg),unsigned long arg);
+
+unsigned long slab_destroy(struct Slab_cache *slab_cache);
+
+void *slab_malloc(struct Slab_cache* slab_cache, unsigned long arg);
+
+unsigned long slab_free(struct Slab_cache *slab_cache, void *address, unsigned long arg);
+
+unsigned long slab_init();
 #endif

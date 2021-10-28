@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "printk.h"
 
+#define __DEBUG__
 
 unsigned long page_init(struct page* p, unsigned long flags){
 	p->attribute|=flags;
@@ -199,7 +200,7 @@ pages_group:%x pages_length:%x\n",\
 
 	for(int i=0;i<end_zone_num;i++){
 		page_init(mman_struct.pages_struct+i,\
-			PG_PTable_Maped|PG_Kernel_Init|PG_Active|PG_Kernel);
+			PG_PTable_Maped|PG_Kernel_Init|PG_Kernel);
 	}
 
 
@@ -360,7 +361,141 @@ void *kmalloc(unsigned long size, unsigned long gpf_flags){
 	return NULL;
 }
 
+struct Slab* kmalloc_create(unsigned long size){
+	struct Slab* slab=NULL;
+	struct page *p=NULL;
+	unsigned long *vaddress=NULL;
+	long structsz=0;
 
+	p=alloc_pages(ZONE_NORMAL,1,0);
+	if(p==NULL){
+		printk(RED,BLACK,"kmalloc_create(): alloc_pages()==NULL\n");
+		return NULL;
+	}
+	page_init(p,PG_Kernel);
+
+	switch(size){
+		case 32:
+		case 64:
+		case 128:
+		case 256:
+		case 512:
+			vaddress=phy2vir(p->phy_addr);
+			structsz=sizeof(struct Slab)+PAGE_2M_SIZE/size/8;
+			slab=(struct Slab*)((unsigned char*)vaddress+PAGE_2M_SIZE-structsz);
+			slab->color_map=(unsigned long*)((unsigned char*)slab+sizeof(struct Slab));
+			slab->free_count=(PAGE_2M_SIZE-(PAGE_2M_SIZE/size/8)-sizeof(struct Slab))/size;
+			slab->using_count=0;
+			slab->Vaddress=vaddress;
+			slab->page=p;
+			list_init(&slab->list);
+			slab->color_length=((slab->color_count+sizeof(unsigned long)*8-1)>>6)<<3;
+			memset(slab->color_map,0xff,slab->color_length);//<===============here
+			for(int i=0;i<slab->color_count;i++){
+				*(slab->color_map+(i>>6))^=1UL<<i%64;
+			}
+			break;
+		case 1024:
+		case 2048:
+		case 4096:
+		case 8192:
+		case 16384:
+
+		case 32768:
+		case 65536:
+		case 131072:
+		case 262144:
+		case 524288:
+		case 1048576:
+			slab=(struct Slab*)kmalloc(sizeof(struct Slab),0);
+			slab->free_count=PAGE_2M_SIZE/size;
+			slab->using_count=0;
+			slab->color_count=slab->free_count;
+			slab->color_length=((slab->color_count+sizeof(unsigned long)*8-1)>>6)<<3;
+			slab->color_map=(unsigned long*)kmalloc(slab->color_length,0);
+			memset(slab->color_map,0xff,slab->color_length);
+
+			slab->Vaddress=phy2vir(p->phy_addr);
+			slab->page=p;
+			list_init(&slab->list);
+
+			for(int i=0;i<slab->color_count;i++){
+				*(slab->color_map+(i>>6))^=1UL<<i%64;
+			}
+			break;
+		default:
+			printk(RED,BLACK,"kmalloc(): wrong size\n");
+			free_pages(p,1);
+			return NULL;
+
+	}
+	return slab;
+}
+
+unsigned long kfree(void *address){
+	int index;
+	struct Slab *slab=NULL;
+	void *page_base_address=(void *)((unsigned long)address&PAGE_2M_MASK);
+
+	for(int i=0;i<16;i++){
+		slab=kmalloc_cache_size[i].cache_pool;
+		do{
+			if(slab->Vaddress==page_base_address){
+				index=(address-slab->Vaddress)/kmalloc_cache_size[i].size;
+
+				*(slab->color_map+(index>>6)) ^= 1UL<<index%64;
+
+				slab->free_count++;
+				slab->using_count--;
+
+				kmalloc_cache_size[i].total_free++;
+				kmalloc_cache_size[i].total_using--;
+
+				if((slab->using_count==0)\
+					&&(kmalloc_cache_size[i].total_free>=slab->color_count * 3 / 2)\
+					&&(kmalloc_cache_size[i].cache_pool!=slab)){
+
+					switch(kmalloc_cache_size[i].size){
+						case 32:
+						case 64:
+						case 128:
+						case 256:	
+						case 512:
+							list_del(&slab->list);
+							kmalloc_cache_size[i].total_free-=slab->color_count;
+
+							page_clean(slab->page);
+							free_pages(slab->page,1);
+							break;
+				
+						default:
+							list_del(&slab->list);
+							kmalloc_cache_size[i].total_free-=slab->color_count;
+
+							kfree(slab->color_map);
+
+							page_clean(slab->page);
+							free_pages(slab->page,1);
+							kfree(slab);
+							break;
+					}
+				}
+				return 1;
+			}else{
+				if(list_is_empty(&slab->list)){
+					break;
+				}
+				slab=container_of(list_next(&slab->list),struct Slab,list);
+			}				
+
+		}while(slab!=kmalloc_cache_size[i].cache_pool);
+	
+	}
+	
+	printk(RED,BLACK,"kfree() ERROR: can`t free memory\n");
+	
+	return 0;
+}
 
 struct Slab_cache *slab_create(unsigned long size,\
 	void *(* constructor)(void *Vaddress, unsigned long arg),\
@@ -592,14 +727,14 @@ unsigned long slab_init(){
 	unsigned long *vir=NULL;
 	unsigned long tmp_address=mman_struct.end_of_struct;
 	unsigned long i;//i is like a temptaion var in function
-
+	
 	for(i=0;i<16;i++){
 		/*
 		assign space and do initialization works
 		for first Slab struct in preset Slab_cache
 		*/
 		kmalloc_cache_size[i].cache_pool=(struct Slab*)mman_struct.end_of_struct;
-		mman_struct.end_of_struct+=sizeof(struct Slab)+sizeof(long)*10;
+		mman_struct.end_of_struct+=(sizeof(struct Slab)+sizeof(long)*10);
 
 		list_init(&kmalloc_cache_size[i].cache_pool->list);
 		//init sizeof struct Slab of cache size
@@ -614,8 +749,8 @@ unsigned long slab_init(){
 
 		kmalloc_cache_size[i].cache_pool->color_map=(unsigned long*)mman_struct.end_of_struct;
 		mman_struct.end_of_struct=(unsigned long)\
-			((mman_struct.end_of_struct+kmalloc_cache_size[i].cache_pool->color_length+\
-			sizeof(long)*10)>>6)<<3;//<---------------here
+			(mman_struct.end_of_struct+kmalloc_cache_size[i].cache_pool->color_length+\
+			sizeof(long)*10)&(~sizeof(long)-1);
 
 		memset(kmalloc_cache_size[i].cache_pool->color_map,0,\
 			kmalloc_cache_size[i].cache_pool->color_length);//<----------here
@@ -651,4 +786,6 @@ unsigned long slab_init(){
 	}
 	return 1;
 }
+
+
 #endif
