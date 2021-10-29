@@ -6,3 +6,5 @@ TODO:
 optimize alloc_pages()
 
 optimize init_mem()
+
+Start handle APIC
