@@ -153,7 +153,7 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 	struct thread_struct *thd=NULL;
 	struct page *p=NULL;
 
-	p=alloc_pages(ZONE_NORMAL,1,PG_PTable_Maped|PG_Active|PG_Kernel);
+	p=alloc_pages(ZONE_NORMAL,1,PG_PTable_Maped|PG_Kernel);
 
 	tsk=(struct task_struct*) phy2vir(p->phy_addr);
 

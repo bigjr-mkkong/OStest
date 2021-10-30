@@ -186,7 +186,7 @@ void init_mem(){
 pages_group:%x pages_length:%x\n",\
 			end_zone_num,z->zone_start_addr,z->zone_end_addr,z->zone_length,\
 			z->pages_group,z->pages_length);
-		if(z->zone_start_addr==0x100000000){
+		if(z->zone_start_addr>=0x100000000&&!ZONE_UNMAPPED_INDEX){
 			ZONE_UNMAPPED_INDEX=end_zone_num;
 		}
 	}
@@ -199,8 +199,12 @@ pages_group:%x pages_length:%x\n",\
 	end_zone_num=vir2phy(mman_struct.end_of_struct)>>PAGE_2M_SHIFT;
 
 	for(int i=0;i<end_zone_num;i++){
-		page_init(mman_struct.pages_struct+i,\
-			PG_PTable_Maped|PG_Kernel_Init|PG_Kernel);
+		struct page *tmp_page=mman_struct.pages_struct+i;
+		page_init(tmp_page,PG_PTable_Maped|PG_Kernel_Init|PG_Kernel);
+		*(mman_struct.bits_map+((tmp_page->phy_addr>>PAGE_2M_SHIFT)>>6))|=\
+			1UL<<(tmp_page->phy_addr>>PAGE_2M_SHIFT)%64;
+		tmp_page->zone_struct->page_using_count++;
+		tmp_page->zone_struct->page_free_count--;
 	}
 
 
@@ -223,26 +227,34 @@ pages_group:%x pages_length:%x\n",\
 
 
 struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
-	int i;
 	unsigned long page=0;
+	unsigned long attribute;
 
 	int zone_start=0;
 	int zone_end=0;
+
+	if(number>=64||number<=0){
+		printk(RED,BLACK,"alloc_pages(): number is not in valid range\n");
+		return NULL;
+	}
 
 	switch(zone_select){//locate to certain mm part
 		case ZONE_DMA:
 				zone_start=0;
 				zone_end=ZONE_DMA_INDEX;
+				attribute=PG_PTable_Maped;
 			break;
 
 		case ZONE_NORMAL:
 				zone_start=ZONE_DMA_INDEX;
 				zone_end=ZONE_NORMAL_INDEX;
+				attribute=PG_PTable_Maped;
 			break;
 
 		case ZONE_UNMAPED:
 				zone_start=ZONE_UNMAPPED_INDEX;
-				zone_end=mman_struct.zones_size - 1;
+				zone_end=mman_struct.zones_size-1;
+				attribute=0;
 			break;
 
 		default:
@@ -251,10 +263,9 @@ struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
 			break;
 	}
 
-	for(i = zone_start;i <= zone_end; i++){
-		struct zone* z;
-		unsigned long j;
-		unsigned long start,end,length;
+	for(int i=zone_start;i<=zone_end;i++){
+		struct zone *z;
+		unsigned long start,end;
 		unsigned long tmp;
 
 		if((mman_struct.zones_struct+i)->page_free_count<number)
@@ -263,24 +274,29 @@ struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
 		z=mman_struct.zones_struct+i;
 		start=z->zone_start_addr>>PAGE_2M_SHIFT;
 		end=z->zone_end_addr>>PAGE_2M_SHIFT;
-		length=z->zone_length>>PAGE_2M_SHIFT;
 		
 		tmp=64-start % 64;
 
-		for(j=start;j<=end;j+=j%64?tmp:64){
-			unsigned long* p=mman_struct.bits_map+(j>>6);
+		for(int j=start;j<=end;j+=j%64?tmp:64){
+			unsigned long *p=mman_struct.bits_map+(j>>6);
 			unsigned long shift=j%64;
 			unsigned long k;
-			for(k=shift;k<64-shift;k++){
-				if(!(((*p>>k)|(*(p+1)<<(64-k)))&(number==64?0xffffffffffffffffUL:((1UL<<number)-1)))){
-					unsigned long l;
-					page=j+k-1;
-					for(l=0;l<number;l++){
-						struct page* x = mman_struct.pages_struct+page+l;
-						page_init(x,page_flags);
+			unsigned long num=(1UL<<number)-1;
 
+			for(int k=shift;k<64-shift;k++){
+				if( !( (k ? ((*p >> k) | (*(p + 1) << (64 - k))) : *p) & (num) ) ){
+					unsigned long l;
+					page=j+k-shift;
+					for(int l=0;l<number;l++){
+						struct page *pageptr=mman_struct.pages_struct+page+l;
+
+						*(mman_struct.bits_map+((pageptr->phy_addr>>PAGE_2M_SHIFT)>>6))|=\
+							1UL<<(pageptr->phy_addr>>PAGE_2M_SHIFT)%64;
+						z->page_using_count++;
+						z->page_free_count--;
+						pageptr->attribute=attribute;
 					}
-					return (struct page*)(mman_struct.pages_struct+page);
+					return (struct Page *)(mman_struct.pages_struct+page);
 				}
 			}
 		
@@ -308,6 +324,7 @@ void free_pages(struct page *page,int number){
 		page->attribute = 0;
 	}
 }
+
 #ifdef __DEBUG__
 
 

@@ -1,6 +1,4 @@
 all: system boot
-	touch debug.i
-	objdump -D system > debug.i
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
 	dd if=boot/boot.bin of=a.img bs=512 count=1 conv=notrunc
 	sudo mount -t msdos -o loop a.img /mnt/floppy/
@@ -8,7 +6,6 @@ all: system boot
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
 	bochs -f bochsrc
-	rm debug.i
 
 system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
@@ -58,4 +55,4 @@ boot/boot.bin: boot/boot.bin
 	nasm boot/boot.asm -o boot/boot.bin
 
 clean:
-	rm -rf *.s *.bin *.o *.txt system
+	rm -rf *.s *.bin *.o *.txt system *.i
