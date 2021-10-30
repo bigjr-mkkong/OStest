@@ -296,7 +296,7 @@ struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
 						z->page_free_count--;
 						pageptr->attribute=attribute;
 					}
-					return (struct Page *)(mman_struct.pages_struct+page);
+					return (struct page *)(mman_struct.pages_struct+page);
 				}
 			}
 		
