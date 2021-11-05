@@ -8,6 +8,9 @@
 #include "cpu.h"
 
 struct Global_Memory_Descriptor mman_struct;
+/*
+mman_struct is a global memory control unit
+*/
 extern char _text;
 extern char _etext;
 extern char _edata;
