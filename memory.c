@@ -811,5 +811,57 @@ unsigned long slab_init(){
 	return 1;
 }
 
+void pagetable_init(){
+	unsigned long *tmp=NULL;
+
+	Global_CR3=Get_gdt();
+	
+	tmp=(unsigned long*)\
+		(((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))+8*256);
+	printk(YELLOW,BLACK,"1: %x\n",*tmp);
+
+	tmp=phy2vir(*tmp&(~0xfffUL));
+	printk(YELLOW,BLACK,"2: %x\n",*tmp);
+
+	tmp=phy2vir(*tmp&(~0xfffUL));
+	printk(YELLOW,BLACK,"3: %x\n",*tmp);
+
+	for(unsigned long znum=0;znum<mman_struct.zones_size;znum++){
+		struct zone* z=mman_struct.zones_struct+znum;
+		struct page *p=z->pages_group;
+
+		if(ZONE_UNMAPPED_INDEX&&znum==ZONE_UNMAPPED_INDEX){
+			break;
+		}
+
+		for(int i=0;i<z->pages_length;i++){
+
+			tmp=(unsigned long*)\
+			 (((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))\
+			+(((unsigned long)phy2vir(p->phy_addr)>>PAGE_GDT_SHIFT)&0x1ff)*8);
+			if(*tmp==0){
+				unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
+				set_mpl4t(tmp,mk_mpl4t(vir2phy(vir),PAGE_KERNEL_GDT));
+			}
+
+			tmp=(unsigned long*)\
+			 (((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))\
+			+(((unsigned long)phy2vir(p->phy_addr)>>PAGE_1G_SHIFT)&0x1ff)*8);
+			if(*tmp==0){
+				unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
+				set_mpl4t(tmp,mk_mpl4t(vir2phy(vir),PAGE_KERNEL_Dir));
+			}
+
+			tmp=(unsigned long*)\
+			 (((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))\
+			+(((unsigned long)phy2vir(p->phy_addr)>>PAGE_2M_SHIFT)&0x1ff)*8);
+			if(*tmp==0){
+				unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
+				set_mpl4t(tmp,mk_mpl4t(vir2phy(p->phy_addr),PAGE_KERNEL_Page));
+			}
+		}
+	}
+	flush_tlb();
+}
 
 #endif

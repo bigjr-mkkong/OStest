@@ -124,6 +124,6 @@ void init_interrupt(){
 
 void do_IRQ(unsigned long regs,unsigned long nr){//regs:rsp,nr
 	unsigned char x=io_in8(0x60);
-	printk(RED,BLACK,"key code:%x",x);
+	printk(RED,BLACK,"key code:%x\n",x);
 	io_out8(0x20,0x20);
 }

@@ -43,24 +43,15 @@ void Start_Kernel(void){
 
 	init_mem();
 
+	slab_init();
+
+	frame_buffer_init();
+
+	pagetable_init();
+
 	//printk(BLACK,WHITE,"\ntest test\n");//0c1047c0  call rdx ;rdx=0xffff8000_00108e5d
 	init_interrupt();
 	
-	slab_init();
-	void *tmp=NULL;
-	printk(RED,YELLOW,"Color map BEFORE kmalloc(): %d\n",\
-		*kmalloc_cache_size[10].cache_pool->color_map);
-
-	tmp=kmalloc(kmalloc_cache_size[10].size,0);
-
-	printk(RED,YELLOW,"Color map AFTER kmalloc(): %d\n",\
-		*kmalloc_cache_size[10].cache_pool->color_map);
-
-	kfree(tmp);
-
-	printk(RED,YELLOW,"Color map AFTER kfree(): %d",\
-		*kmalloc_cache_size[10].cache_pool->color_map);
-
 	//task_init();
 	while(1);
 }

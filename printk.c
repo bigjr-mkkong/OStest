@@ -1,6 +1,7 @@
 #include "printk.h"
 #include "font.h"
 #include "lib.h"
+#include "memory.h"
 #include <stdarg.h>
 
 char buf[4086]={0};
@@ -116,4 +117,44 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 		pos.Yposition*pos.Ycharsize,FR_color,BK_color,*(buf+i));
 		pos.Xposition++;
 	}
+}
+
+void frame_buffer_init(){
+	unsigned long *tmp;
+	unsigned long *tmp2;
+	unsigned int *FB_addr=(unsigned int *)phy2vir(0xe0000000);
+
+	Global_CR3 = Get_gdt();
+
+	tmp=phy2vir(\
+		(unsigned long*)((unsigned long)Global_CR3&(~0xfffUL))\
+		+(((unsigned long)FB_addr>>PAGE_GDT_SHIFT)& 0x1ff)\
+		);
+	if(*tmp==0){
+		unsigned long *vir = kmalloc(PAGE_4K_SIZE,0);
+		set_mpl4t(tmp,mk_mpl4t(vir2phy(vir),PAGE_KERNEL_GDT));
+	}
+
+	tmp=phy2vir(
+		(unsigned long *)(*tmp&(~0xfffUL))\
+		+(((unsigned long)FB_addr>>PAGE_1G_SHIFT)&0x1ff)
+		);
+	if(*tmp == 0){
+		unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
+		set_pdpt(tmp,mk_pdpt(vir2phy(vir),PAGE_KERNEL_Dir));
+	}
+	
+	for(unsigned long i=0;i<pos.FB_len;i+=PAGE_2M_SIZE){
+		tmp2=phy2vir(
+			(unsigned long *)(*tmp&(~0xfffUL))\
+			+(((unsigned long)((unsigned long)FB_addr+i)>>PAGE_2M_SHIFT)&0x1ff)
+			);
+	
+		unsigned long phy=0xe0000000+i;
+		set_pdt(tmp2,mk_pdt(phy,PAGE_KERNEL_Page|PAGE_PWT|PAGE_PCD));
+	}
+
+	pos.FB_addr=(unsigned int *)phy2vir(0xe0000000);
+
+	flush_tlb();
 }
