@@ -520,7 +520,13 @@ unsigned long kfree(void *address){
 	
 	return 0;
 }
+/*
+This function can create a new struct Slab_cache.
+size: size of each struct Slab in the slab cache(round up 2 )
 
+each slab control the allocation of one 2M page, and slab_cache control the slab struct
+with certain size
+*/
 struct Slab_cache *slab_create(unsigned long size,\
 	void *(* constructor)(void *Vaddress, unsigned long arg),\
 	void *(* destructor)(void *Vaddress, unsigned long arg),unsigned long arg){
@@ -609,10 +615,19 @@ unsigned long slab_destroy(struct Slab_cache *slab_cache){
 
 }
 
+/*
+slab_malloc() are use to allocate the memory in given slab struct
+
+return the address of free memory block in struct slab(size depends on
+slab_cache->size)
+*/
+
 void *slab_malloc(struct Slab_cache* slab_cache, unsigned long arg){
 	struct Slab *slab_p=slab_cache->cache_pool;
 	struct Slab *tmp_slab=NULL;
 	if(slab_cache->total_free=0){
+		/*if cannot find free slab in certain slab_cache,
+		 generate a new slab and link it to the prior one*/
 		tmp_slab=(struct Slab*)kmalloc(sizeof(struct Slab),0);
 		if(tmp_slab==NULL){
 			printk(RED,BLACK,"slab_malloc(): tmp_slab=kmalloc()==NULL");
@@ -663,6 +678,10 @@ void *slab_malloc(struct Slab_cache* slab_cache, unsigned long arg){
 			}
 		}
 	}else{
+		/*
+		if the given slab_cache have free slab structure, use first fit algo to find 
+		one memory block
+		*/
 		do{
 			if(slab_p->free_count==0){
 				slab_p=container_of(list_next(&slab_p->list),struct Slab,list);
@@ -834,7 +853,7 @@ void pagetable_init(){
 			break;
 		}
 
-		for(int i=0;i<z->pages_length;i++){
+		for(int i=0;i<z->pages_length;i++,p++){
 
 			tmp=(unsigned long*)\
 			 (((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))\
@@ -845,19 +864,21 @@ void pagetable_init(){
 			}
 
 			tmp=(unsigned long*)\
-			 (((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))\
+			((unsigned long)phy2vir(*tmp&(~0xfffUL))\
 			+(((unsigned long)phy2vir(p->phy_addr)>>PAGE_1G_SHIFT)&0x1ff)*8);
 			if(*tmp==0){
 				unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
-				set_mpl4t(tmp,mk_mpl4t(vir2phy(vir),PAGE_KERNEL_Dir));
+				set_pdpt(tmp,mk_pdpt(vir2phy(vir),PAGE_KERNEL_Dir));
 			}
 
 			tmp=(unsigned long*)\
-			 (((unsigned long)phy2vir((unsigned long)Global_CR3&(~0xfffUL)))\
+			((unsigned long)phy2vir(*tmp&(~0xfffUL))\
 			+(((unsigned long)phy2vir(p->phy_addr)>>PAGE_2M_SHIFT)&0x1ff)*8);
-			if(*tmp==0){
-				unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
-				set_mpl4t(tmp,mk_mpl4t(vir2phy(p->phy_addr),PAGE_KERNEL_Page));
+
+			set_pdt(tmp,mk_pdt(p->phy_addr,PAGE_KERNEL_Page));
+
+			if(i%64==0){
+				printk(BLUE,YELLOW,"%x : %x\n",(unsigned long)tmp,*tmp);
 			}
 		}
 	}
