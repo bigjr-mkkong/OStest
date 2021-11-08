@@ -168,7 +168,16 @@ struct task_struct *get_current(){
 	"movq %rsp, %rbx \n\t"\
 	"andq  $-32768,%rbx \n\t"
 
-//0x108f2f -- push %%rbp
+/*
+this block will transfer the rsp and rip value for current process and next process
+
+the return point ofo current process will set to label 1:
+
+RDI store the address of pcb for previous process
+RSI store the address of pcb for next process
+
+then it will call __switch_to() and pass the value of RDI and RSI into it
+*/
 #define switch_to(prev,next)\
 do{	\
 	while(0);\
@@ -180,7 +189,7 @@ do{	\
             "movq %%rax, %1 \n\t"\
             "pushq %3 \n\t"\
             "jmp __switch_to \n\t"\
-            "1: \n\t"\
+            "1 : \n\t"\
             "popq %%rax \n\t"\
             "popq %%rbp \n\t"\
             :"=m"(prev->thread->rsp),"=m"(prev->thread->rip)	\

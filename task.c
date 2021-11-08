@@ -112,6 +112,10 @@ void task_init(){
 	init_mm.end_brk=mman_struct.end_brk;
 	init_mm.start_stack=_stack_start;
 
+	/*
+	These code write MSR register to preserve the selector,stack,and address of
+	link programe after execute SYSEXIT
+	*/
 	wrmsr(0x174,KERNEL_CS);
 	wrmsr(0x175,current->thread->rsp0);
 	wrmsr(0x176,(unsigned long)system_call);
@@ -123,6 +127,9 @@ void task_init(){
 	init_tss[0].rsp0=init_thread.rsp0;
 
 	list_init(&init_task_union.task.list);
+
+	//setting the first thread in init()
+	//entry funciton is kernel_thread_func in order to recover the context
 	kernel_thread(init,10,CLONE_FS|CLONE_FILES|CLONE_SIGNAL);
 	init_task_union.task.state=TASK_RUNNING;
 	p=container_of(list_next(&current->list),struct task_struct,list);
