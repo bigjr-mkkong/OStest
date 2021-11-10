@@ -7,9 +7,9 @@ all: system boot
 	sudo umount /mnt/floppy/
 	bochs -f bochsrc
 
-system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o
+system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o 8259a.o APIC.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o task.o cpu.o \
+	lib.o interrupt.o task.o cpu.o 8259a.o APIC.o \
 	-T Kernel.lds 
 
 head.o:	head.S
@@ -44,7 +44,11 @@ task.o:task.c
 cpu.o:cpu.c
 	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector cpu.c
 
+8259a.o:8259a.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector 8259a.c
 
+APIC.o:APIC.c
+	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector APIC.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

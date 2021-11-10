@@ -32,3 +32,5 @@ mouse: enabled=0
 
 # enable key mapping, using US layout as default.
 keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
+
+cpuid: apic=x2apic

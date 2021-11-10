@@ -6,6 +6,7 @@
 #include "interrupt.h"
 #include "task.h"
 #include "cpu.h"
+#include "APIC.h"
 
 struct Global_Memory_Descriptor mman_struct;
 /*
@@ -50,8 +51,8 @@ void Start_Kernel(void){
 	pagetable_init();
 
 	//printk(BLACK,WHITE,"\ntest test\n");//0c1047c0  call rdx ;rdx=0xffff8000_00108e5d
-	init_interrupt();
-	
+	//init_i8295();
+	local_APIC_init();
 	//task_init();
 	while(1);
 }
