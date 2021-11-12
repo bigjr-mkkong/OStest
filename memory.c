@@ -217,10 +217,6 @@ pages_group:%x pages_length:%x\n",\
 
 
 	Global_CR3=Get_gdt();
-
-	printk(INDIGO,BLACK,"Global_CR3:%x\n",Global_CR3);
-	printk(INDIGO,BLACK,"*Global_CR3:%x\n",*phy2vir(Global_CR3)&(~0xff));
-	printk(PURPLE,BLACK,"**Global_CR3:%x\n",*phy2vir(*phy2vir(Global_CR3)&(~0xff))&(~0xff));
 	/*
 	for(int i=0;i<10;i++){
 		*(phy2vir(Global_CR3)+i)=0UL;
