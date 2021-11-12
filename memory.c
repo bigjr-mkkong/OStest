@@ -189,10 +189,11 @@ tot now is the number of useable page number(page size=2M)
 	int end_zone_num;
 	for(end_zone_num=0;end_zone_num<mman_struct.zones_size;end_zone_num++){
 		struct zone* z=mman_struct.zones_struct+end_zone_num;
+		/*
 		printk(GREEN,ORANGE,"Zone  %d\nzone_start_addr:%x zone_end_addr:%x zone_length:%x\n\
 pages_group:%x pages_length:%x\n",\
 			end_zone_num,z->zone_start_addr,z->zone_end_addr,z->zone_length,\
-			z->pages_group,z->pages_length);
+			z->pages_group,z->pages_length);*/
 		if(z->zone_start_addr>=0x100000000&&!ZONE_UNMAPPED_INDEX){
 			ZONE_UNMAPPED_INDEX=end_zone_num;
 		}
@@ -873,8 +874,8 @@ void pagetable_init(){
 
 			set_pdt(tmp,mk_pdt(p->phy_addr,PAGE_KERNEL_Page));
 
-			if(i%64==0){
-				printk(BLUE,YELLOW,"%x : %x\n",(unsigned long)tmp,*tmp);
+			if(i%128==0){
+				printk(BLUE,YELLOW,"%x: %x\n",(unsigned long)tmp,*tmp);
 			}
 		}
 	}

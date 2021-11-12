@@ -34,3 +34,4 @@ mouse: enabled=0
 keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
 
 cpuid: apic=x2apic
+cpu: model=bx_generic
