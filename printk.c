@@ -96,6 +96,10 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 	va_start(args,fmt);
 	int len=vsprintf(fmt,args);
 	for(int i=0;i<len;i++){
+		if(pos.Xposition>(pos.Xresolution/pos.Xcharsize-1)){
+			pos.Xposition=0;
+			pos.Yposition++;
+		}
 		if((unsigned char)*(buf+i)=='\n'){
 			pos.Yposition++;
 			pos.Xposition=0;
