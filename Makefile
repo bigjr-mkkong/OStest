@@ -1,3 +1,5 @@
+CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector
+
 all: system boot
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
 	dd if=boot/boot.bin of=a.img bs=512 count=1 conv=notrunc
@@ -21,34 +23,34 @@ entry.o:entry.S
 	as --64 -o entry.o entry.s
 
 main.o:	main.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector main.c
+	gcc  $(CFLAGS) main.c
 
 printk.o:printk.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector printk.c
+	gcc  $(CFLAGS) printk.c
 
 trap.o:trap.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector trap.c
+	gcc  $(CFLAGS) trap.c
 
 memory.o:memory.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector memory.c
+	gcc  $(CFLAGS) memory.c
 
 lib.o:lib.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector lib.c
+	gcc  $(CFLAGS) lib.c
 
 interrupt.o:interrupt.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector interrupt.c
+	gcc  $(CFLAGS) interrupt.c
 
 task.o:task.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector task.c
+	gcc  $(CFLAGS) task.c
 
 cpu.o:cpu.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector cpu.c
+	gcc  $(CFLAGS) cpu.c
 
 8259a.o:8259a.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector 8259a.c
+	gcc  $(CFLAGS) 8259a.c
 
 APIC.o:APIC.c
-	gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector APIC.c
+	gcc  $(CFLAGS) APIC.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

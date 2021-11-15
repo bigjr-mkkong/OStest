@@ -8,5 +8,6 @@
 void do_IRQ(struct pt_regs *regs,unsigned long nr);
 
 void local_APIC_init();
+void APIC_IOAPIC_init();
 
 #endif
