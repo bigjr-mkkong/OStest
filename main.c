@@ -8,7 +8,7 @@
 #include "cpu.h"
 #include "APIC.h"
 
-//#define APIC
+#define APIC
 
 struct Global_Memory_Descriptor mman_struct;
 /*
@@ -60,7 +60,6 @@ void Start_Kernel(void){
 	#else
 	init_i8295();
 	#endif
-
 	//task_init();
 	while(1);
 }
