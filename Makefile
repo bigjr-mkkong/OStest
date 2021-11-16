@@ -1,3 +1,5 @@
+PIC := APIC
+
 CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector
 
 all: system boot
@@ -9,9 +11,9 @@ all: system boot
 	sudo umount /mnt/floppy/
 	bochs -f bochsrc
 
-system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o 8259a.o APIC.o
+system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o task.o cpu.o 8259a.o APIC.o \
+	lib.o interrupt.o task.o cpu.o PIC.o \
 	-T Kernel.lds 
 
 head.o:	head.S
@@ -23,7 +25,7 @@ entry.o:entry.S
 	as --64 -o entry.o entry.s
 
 main.o:	main.c
-	gcc  $(CFLAGS) main.c
+	gcc  $(CFLAGS) main.c -D$(PIC)
 
 printk.o:printk.c
 	gcc  $(CFLAGS) printk.c
@@ -46,11 +48,14 @@ task.o:task.c
 cpu.o:cpu.c
 	gcc  $(CFLAGS) cpu.c
 
-8259a.o:8259a.c
-	gcc  $(CFLAGS) 8259a.c
+ifeq ($(PIC),APIC)
+PIC.o:APIC.c
+	gcc  $(CFLAGS) APIC.c -o PIC.o
+else
+PIC.o:8259a.c
+	gcc  $(CFLAGS) 8259a.c -o PIC.o
+endif
 
-APIC.o:APIC.c
-	gcc  $(CFLAGS) APIC.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

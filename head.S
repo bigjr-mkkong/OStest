@@ -78,7 +78,6 @@ setup_TSS64:
 	/*mov $SelectorTss64_1,%ax
 	ltr	%ax*/
 
-
 	movq go_to_kernel(%rip),%rax
 	pushq $0x08
 	pushq %rax

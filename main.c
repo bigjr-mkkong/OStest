@@ -8,8 +8,6 @@
 #include "cpu.h"
 #include "APIC.h"
 
-#define APIC
-
 struct Global_Memory_Descriptor mman_struct;
 /*
 mman_struct is a global memory control unit
@@ -36,7 +34,7 @@ void Start_Kernel(void){
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
 
 	set_sys_int();
-	
+
 	init_cpu();
 
 	mman_struct.start_code=(unsigned long)&_text;
@@ -55,7 +53,7 @@ void Start_Kernel(void){
 	//printk(BLACK,WHITE,"\ntest test\n");//0c1047c0  call rdx ;rdx=0xffff8000_00108e5d
 	//init_i8295();
 	
-	#ifdef APIC
+	#if APIC
 	APIC_IOAPIC_init();
 	#else
 	init_i8295();
