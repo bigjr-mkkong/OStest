@@ -175,13 +175,13 @@ void IOAPIC_pagetab_init(){
 unsigned long io_apic_rte_read(unsigned char index){
 	unsigned long ret;
 
-	*ioapic_map.vir_index_addr=index++;
+	*ioapic_map.vir_index_addr=index+1;
 	io_mfence();
 	ret=*ioapic_map.vir_data_addr;
 	ret<<=32;
 	io_mfence();
 
-	*ioapic_map.vir_index_addr=index++;
+	*ioapic_map.vir_index_addr=index+1;
 	io_mfence();
 	ret|=*ioapic_map.vir_data_addr;
 	io_mfence();
@@ -192,13 +192,13 @@ unsigned long io_apic_rte_read(unsigned char index){
 void io_apic_rte_write(unsigned char index, unsigned long value){
 	*ioapic_map.vir_index_addr=index;
 	io_mfence();
-	ioapic_map.vir_data_addr=value&0xffffffff;
+	*ioapic_map.vir_data_addr=value&0xffffffff;
 	value>>32;
 	io_mfence();
 
 	*ioapic_map.vir_index_addr=index+1;
 	io_mfence();
-	ioapic_map.vir_data_addr=value&0xffffffff;
+	*ioapic_map.vir_data_addr=value&0xffffffff;
 	io_mfence();
 }
 

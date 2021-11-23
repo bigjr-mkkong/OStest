@@ -6,7 +6,12 @@
 #include "interrupt.h"
 #include "task.h"
 #include "cpu.h"
+
+#if APIC
 #include "APIC.h"
+#else
+#include "8259a.h"
+#endif
 
 struct Global_Memory_Descriptor mman_struct;
 /*
