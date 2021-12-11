@@ -178,7 +178,7 @@ __PDE:
 	.quad	0x200083
 	.quad	0x400083
 	.quad	0x600083
-	.quad	0x800083  	/* 0x800083 */
+	.quad	0x800083		/* 0x800083 */
 	.quad	0xa00083
 	.quad	0xc00083
 	.quad	0xe00083
@@ -201,7 +201,18 @@ __PDE:
 
 
 
-	.quad	0xe0000083  	/*0x 3000000*/
+	.quad	0xfd000083		/*0x 3000000*/
+	.quad	0xfd200083
+	.quad	0xfd400083
+	.quad	0xfd600083
+	.quad	0xfd800083
+	.quad	0xfda00083
+	.quad	0xfdc00083
+	.quad	0xfde00083
+	.fill	480,8,0
+
+/*video memory under bochs
+	.quad	0xe0000083
 	.quad	0xe0200083
 	.quad	0xe0400083
 	.quad	0xe0600083
@@ -210,6 +221,7 @@ __PDE:
 	.quad	0xe0c00083
 	.quad	0xe0e00083
 	.fill	480,8,0
+*/
 
 /*=============GDT=========================*/
 

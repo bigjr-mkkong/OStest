@@ -31,17 +31,16 @@ void Start_Kernel(void){
 	pos.Ycharsize=16;
 	pos.FB_addr=(int *)0xffff800003000000;
 	pos.FB_len=(pos.Xresolution*pos.Yresolution*4+PAGE_4K_SIZE-1)&(PAGE_4K_MASK);
+	printk(WHITE,BLACK,"Kernel Started\n");
 	//load TR with selector defined in GDT
 	load_TR(10);
-
-	set_tss64(0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
+	set_tss64(_stack_start,_stack_start,_stack_start, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
 
 	set_sys_int();
 
 	init_cpu();
-
 	mman_struct.start_code=(unsigned long)&_text;
 	mman_struct.end_code=(unsigned long)&_etext;
 	mman_struct.end_data=(unsigned long)&_edata;

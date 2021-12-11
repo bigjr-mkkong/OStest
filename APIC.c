@@ -60,7 +60,7 @@ void local_APIC_init(){
 	__asm__ __volatile__(
 		"movq $0x80f,%%rcx	\n\t"
 		"rdmsr				\n\t"
-		"or $0x100,%%rax	\n\t"
+		"or $0x1100,%%rax	\n\t"
 		"wrmsr			\n\t"
 		:
 		:
@@ -104,6 +104,8 @@ void local_APIC_init(){
 		"wrmsr				\n\t"
 		whether support CMCI function or not can be evaluate in IA32_MCG_CAP[10]
 		*/
+		"movq $0x82f,%%rcx	\n\t"//mask LVT CMCI register
+		"wrmsr				\n\t"
 		"movq $0x832,%%rcx	\n\t"//mask LVT Timer register 
 		"wrmsr				\n\t"
 		"movq $0x833,%%rcx	\n\t"//mask LVT Thermal Sensor register

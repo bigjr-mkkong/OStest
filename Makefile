@@ -3,6 +3,7 @@ PIC := APIC
 CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector
 
 all: system boot
+	objcopy --only-keep-debug system kernel.debug
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
 	dd if=boot/boot.bin of=a.img bs=512 count=1 conv=notrunc
 	sudo mount -t msdos -o loop a.img /mnt/floppy/
@@ -10,7 +11,9 @@ all: system boot
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
 	#bochs -f bochsrc
-	qemu-system-x86_64 -fda a.img
+	qemu-system-x86_64 -cpu Nehalem -D ./log.txt -s -S -fda a.img
+	#qemu-system-x86_64 -drive format=raw,file=a.img
+
 
 system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
@@ -67,4 +70,5 @@ boot/boot.bin: boot/boot.bin
 	nasm boot/boot.asm -o boot/boot.bin
 
 clean:
-	rm -rf *.s *.bin *.o *.txt system *.i
+	rm -rf *.s *.bin *.o *.txt system *.i *.debug
+	rm boot/*.bin

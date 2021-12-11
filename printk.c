@@ -126,7 +126,7 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 void frame_buffer_init(){
 	unsigned long *tmp;
 	unsigned long *tmp2;
-	unsigned int *FB_addr=(unsigned int *)phy2vir(0xe0000000);
+	unsigned int *FB_addr=(unsigned int *)phy2vir(0xfd000000);
 
 	Global_CR3 = Get_gdt();
 
@@ -154,11 +154,11 @@ void frame_buffer_init(){
 			+(((unsigned long)((unsigned long)FB_addr+i)>>PAGE_2M_SHIFT)&0x1ff)
 			);
 	
-		unsigned long phy=0xe0000000+i;
+		unsigned long phy=0xfd000000+i;
 		set_pdt(tmp2,mk_pdt(phy,PAGE_KERNEL_Page|PAGE_PWT|PAGE_PCD));
 	}
 
-	pos.FB_addr=(unsigned int *)phy2vir(0xe0000000);
+	pos.FB_addr=(unsigned int *)phy2vir(0xfd000000);
 
 	flush_tlb();
 }

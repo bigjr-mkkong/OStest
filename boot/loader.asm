@@ -14,9 +14,9 @@ OffsetTmpOfKernelFile	equ		0x7e00
 MemoryStructBufferAddr	equ		0x7e00
 
 [SECTION .gdt]
-LABEL_GDT			Descriptor			0,			0,			0
-LABEL_DESC_CODE32	Descriptor			0,		0fffffh,	DA_32|DA_CR|DA_LIMIT_4K
-LABEL_DESC_DATA32	Descriptor			0,		0fffffh,	DA_32|DA_DRW|DA_LIMIT_4K
+LABEL_GDT			Descriptor			0,	0,	0
+LABEL_DESC_CODE32	Descriptor			0,0fffffh,DA_32|DA_CR|DA_LIMIT_4K
+LABEL_DESC_DATA32	Descriptor			0,0fffffh,DA_32|DA_DRW|DA_LIMIT_4K
 
 GdtLen	equ		$ - LABEL_GDT
 GdtPtr	dw  GdtLen - 1
@@ -291,6 +291,11 @@ LABEL_GET_MEM_SUCC:
 	mov bx,4180h
 	int 10h
 
+	mov ax,cs
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+
 	cli
 
 	db 0x66
@@ -380,27 +385,27 @@ ReadSector:
 ;cylinder=ans1>>1
 ;head=ans1&1
 
-	push	bp
-	mov	bp,	sp
-	sub	esp,	2
-	mov	byte	[bp - 2],	cl
-	push	bx
-	mov	bl,	[BPB_SecPerTrk]
+	push bp
+	mov	bp,sp
+	sub	esp,2
+	mov	byte [bp-2],cl
+	push bx
+	mov	bl,[BPB_SecPerTrk]
 	div	bl
 	inc	ah
-	mov	cl,	ah
-	mov	dh,	al
-	shr	al,	1
-	mov	ch,	al
-	and	dh,	1
+	mov	cl,ah
+	mov	dh,al
+	shr	al,1
+	mov	ch,al
+	and	dh,1
 	pop	bx
-	mov	dl,	[BS_DrvNum]
+	mov	dl,[BS_DrvNum]
 .Go_On_Reading:
-	mov	ah,	2
-	mov	al,	byte	[bp - 2]
+	mov	ah,2
+	mov	al,byte	[bp-2]
 	int	13h
-	jc	.Go_On_Reading
-	add	esp,	2
+	jc .Go_On_Reading
+	add	esp,2
 	pop	bp
 	ret
 
@@ -490,6 +495,8 @@ Odd		db 	0
 OffsetOfKernelFileCount	dd	OffsetOfKernelFile
 DisplayPosition		dd 		(80*6+0)*2		
 
+KernelFileName		db	"KERNEL  BIN",0
+
 StartLoaderMsg 		db		"Loading......"
 StartLoaderMsgLen	equ		$ - StartLoaderMsg
 
@@ -499,10 +506,8 @@ MissKernelMsglen	equ		$ - MissKernelMsg
 StartGetMemStructMessage 	db		"Start Getting Memory Structure......"
 StartGetMemStructMessageLen	equ		$ - StartGetMemStructMessage
 
-ErrToGetMem			db		"Fail to get memory information......"
+ErrToGetMem			db		"Fail to get memory info......"
 ErrToGetMemLen		equ		$ - ErrToGetMem
 
-SuccToGetMemInfo	db		"Success to get memory information"
+SuccToGetMemInfo	db		"Success to get memory info"
 SuccToGetMemInfoLen	equ		$ - SuccToGetMemInfo
-
-KernelFileName		db	"KERNEL  BIN",0
