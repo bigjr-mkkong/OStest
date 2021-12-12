@@ -4,7 +4,11 @@ I'm still working on this 64 bits kernel, and the reason is just for fun.
 
 ### Environment:
 
-Simulator: 
+System:
+
+Ubuntu 20.04.3 LTS
+
+Emulator: 
 
 Bochs x86 Emulator 2.6
 
