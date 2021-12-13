@@ -11,7 +11,7 @@ all: system boot
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
 	#bochs -f bochsrc
-	qemu-system-x86_64 -cpu Nehalem -D ./log.txt -s -S -fda a.img
+	qemu-system-x86_64 -cpu Nehalem,+x2apic -enable-kvm -D ./log.txt -s -S -fda a.img
 	#qemu-system-x86_64 -drive format=raw,file=a.img
 
 
