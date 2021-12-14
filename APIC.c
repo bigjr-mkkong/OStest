@@ -181,7 +181,7 @@ unsigned long io_apic_rte_read(unsigned char index){
 	ret<<=32;
 	io_mfence();
 
-	*ioapic_map.vir_index_addr=index+1;
+	*ioapic_map.vir_index_addr=index;
 	io_mfence();
 	ret|=*ioapic_map.vir_data_addr;
 	io_mfence();
@@ -207,11 +207,11 @@ void IOAPIC_init(){
 	io_mfence();
 	*ioapic_map.vir_data_addr=0x0f000000;
 	io_mfence();
-	printk(GREEN,BLACK,"Get IO APIC Reg: %x, ID: %x\n",*ioapic_map.vir_data_addr,\
+	printk(GREEN,BLACK,"Get IO APIC ID Reg: %x, ID: %x\n",*ioapic_map.vir_data_addr,\
 		*ioapic_map.vir_data_addr>>24&0xf);
 	io_mfence();
 
-	ioapic_map.vir_index_addr=0x01;
+	*ioapic_map.vir_index_addr=0x01;
 	io_mfence();
 	printk(GREEN,BLACK,"IO APIC Version: %x, MAX redirection entries: %d\n",\
 		*ioapic_map.vir_data_addr,((*ioapic_map.vir_data_addr>>16)&0xff)+1);
@@ -232,7 +232,7 @@ void APIC_IOAPIC_init(){
 	IOAPIC_pagetab_init();
 
 	for(int i=32;i<56;i++){
-		set_intr_gate(i,2,interrupt[i-32]);
+		set_intr_gate(i,0,interrupt[i-32]);
 	}
 
 	//mask 8259a
@@ -247,23 +247,6 @@ void APIC_IOAPIC_init(){
 	local_APIC_init();
 
 	IOAPIC_init();
-
-	io_out32(0xcf8,0x8000f8f0);
-	x=io_in32(0xcfc);
-	printk(GREEN,BLACK,"Get RCBA Address: %d\n",x);
-
-	x&=0xffffc000;
-	printk(GREEN,BLACK,"Get RCBA Address: %d\n",x);
-
-	if(x>0xfec00000&&x<0xfee00000){
-		p=(unsigned int*)phy2vir(x+0x31feUL);
-	}
-
-	x=(*p&0xffffff00)|0x100;
-	io_mfence();
-	*p=x;
-	io_mfence();
-
 	sti();
 }
 
