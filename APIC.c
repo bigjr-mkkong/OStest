@@ -152,21 +152,21 @@ void IOAPIC_pagetab_init(){
 
 	Global_CR3=Get_gdt();
 
-	tmp=phy2vir(Global_CR3+(((unsigned long)IOAPIC_addr>>PAGE_GDT_SHIFT)&0X1ff));
+	tmp=phy2vir(Global_CR3+(((unsigned long)IOAPIC_addr>>PAGE_GDT_SHIFT)&0x1ff));
 	if(*tmp==0){
 		unsigned long* vir=kmalloc(PAGE_4K_SIZE,0);
 		set_mpl4t(tmp,mk_mpl4t(vir2phy(vir),PAGE_KERNEL_GDT));
 	}
 
 	tmp=phy2vir((unsigned long*)(*tmp&(~0xfffUL))+\
-		(((unsigned long)IOAPIC_addr>>PAGE_1G_SHIFT)&0X1ff));
+		(((unsigned long)IOAPIC_addr>>PAGE_1G_SHIFT)&0x1ff));
 	if(*tmp==0){
 		unsigned long *vir=kmalloc(PAGE_4K_SIZE,0);
 		set_pdpt(tmp,mk_pdpt(vir2phy(vir),PAGE_KERNEL_Dir));
 	}
 
 	tmp=phy2vir((unsigned long*)(*tmp&(~0xfffUL))+\
-		(((unsigned long)IOAPIC_addr>>PAGE_2M_SHIFT)&0X1ff));
+		(((unsigned long)IOAPIC_addr>>PAGE_2M_SHIFT)&0x1ff));
 	set_pdt(tmp,mk_pdt(ioapic_map.phy_addr,PAGE_KERNEL_Page|PAGE_PWT|PAGE_PCD));
 
 	flush_tlb();
@@ -247,14 +247,25 @@ void APIC_IOAPIC_init(){
 	local_APIC_init();
 
 	IOAPIC_init();
+
+	memset(interrupt_desc,0,sizeof(irq_desc_T)*NR_IRQS);
 	sti();
 }
 
 void do_IRQ(struct pt_regs *regs,unsigned long nr){ //regs:rsp,nr
 	unsigned char x;
-	x=io_in8(0x60);
-	printk(BLUE,WHITE,"keycode: %x",x);
+	irq_desc_T *irq=&interrupt_desc[nr-32];
 
+	x=io_in8(0x60);
+	printk(BLUE,WHITE,"[IRQ%x] keycode: %x\n",nr,x);
+
+	if(irq->handler!=NULL){
+		irq->handler(nr,irq->parameter,regs);
+	}
+
+	if(irq->controller!=NULL&&irq->controller->ack!=NULL){
+		irq->controller->ack(nr);
+	}
 	__asm__ __volatile__(
 		"movq $0x00,%%rdx	\n\t"
 		"movq $0x00,%%rax	\n\t"

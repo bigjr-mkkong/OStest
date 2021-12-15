@@ -1,6 +1,6 @@
 PIC := APIC
 
-CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector
+CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
@@ -11,7 +11,7 @@ all: system boot
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
 	#bochs -f bochsrc
-	qemu-system-x86_64 -cpu Nehalem,+x2apic -enable-kvm -D ./log.txt -s -S -fda a.img
+	qemu-system-x86_64 -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img
 	#qemu-system-x86_64 -drive format=raw,file=a.img
 
 

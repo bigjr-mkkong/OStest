@@ -10,7 +10,7 @@ Ubuntu 20.04.3 LTS
 
 Emulator: 
 
-Bochs x86 Emulator 2.6
+QEMU emulator version 4.2.1
 
 Compiler: 
 
@@ -46,9 +46,9 @@ to compile and load system in to bochs
 
 +Slab allocator and kmalloc()/kfree() - Finished
 
-@@APIC - Working@@
++APIC - Finished
 
--Device drive(keyboard, hdd) - Unfinished
+@@Device drive(keyboard, hdd) - Working@@
 
 -Task management: - Unfinished
 
