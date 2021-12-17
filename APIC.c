@@ -8,6 +8,80 @@
 #include "cpu.h"
 #include "APIC.h"
 
+unsigned long ioapic_rte_read(unsigned char index){
+	unsigned long ret;
+
+	*ioapic_map.vir_index_addr=index+1;
+	io_mfence();
+	ret=*ioapic_map.vir_data_addr;
+	ret<<=32;
+	io_mfence();
+
+	*ioapic_map.vir_index_addr=index;
+	io_mfence();
+	ret|=*ioapic_map.vir_data_addr;
+	io_mfence();
+
+	return ret;
+}
+
+void ioapic_rte_write(unsigned char index, unsigned long value){
+	*ioapic_map.vir_index_addr=index;
+	io_mfence();
+	*ioapic_map.vir_data_addr=value&0xffffffff;
+	value>>32;
+	io_mfence();
+
+	*ioapic_map.vir_index_addr=index+1;
+	io_mfence();
+	*ioapic_map.vir_data_addr=value&0xffffffff;
+	io_mfence();
+}
+
+void IOAPIC_enable(unsigned long irq){
+	unsigned long value=0;
+	value=ioapic_rte_read((irq-32)*2+0x10);
+	value=value&(~0x10000UL); 
+	ioapic_rte_write((irq-32)*2+0x10,value);
+}
+
+void IOAPIC_disable(unsigned long irq){
+	unsigned long value=0;
+	value=ioapic_rte_read((irq-32)*2+0x10);
+	value=value|0x10000UL; 
+	ioapic_rte_write((irq-32)*2+0x10,value);
+}
+
+unsigned long IOAPIC_install(unsigned long irq,void*arg){
+	struct IO_APIC_RET_entry *entry=(struct IO_APIC_RET_entry*)arg;
+	ioapic_rte_write((irq-32)*2+0x10,*(unsigned long*)entry);
+	return 1;
+}
+
+void IOAPIC_uninstall(unsigned long irq){
+	ioapic_rte_write((irq-32)*2+0x10,0x10000UL);
+}
+
+void IOAPIC_level_ack(unsigned long irq){
+	__asm__ __volatile__(	
+				"movq $0x00, %%rdx	\n\t"
+				"movq $0x00, %%rax	\n\t"
+				"movq  $0x80b, %%rcx	\n\t"
+				"wrmsr	\n\t"
+				:::"memory");
+	*ioapic_map.vir_EOI_addr=irq;
+}
+
+void IOAPIC_edge_ack(unsigned long irq){
+	__asm__ __volatile__(	
+				"movq $0x00, %%rdx	\n\t"
+				"movq $0x00, %%rax	\n\t"
+				"movq  $0x80b, %%rcx	\n\t"
+				"wrmsr \n\t"
+				:::"memory");
+}
+
+
 void local_APIC_init(){
 	unsigned int x,y;
 	unsigned int a,b,c,d;
@@ -172,36 +246,6 @@ void IOAPIC_pagetab_init(){
 	flush_tlb();
 }
 
-unsigned long io_apic_rte_read(unsigned char index){
-	unsigned long ret;
-
-	*ioapic_map.vir_index_addr=index+1;
-	io_mfence();
-	ret=*ioapic_map.vir_data_addr;
-	ret<<=32;
-	io_mfence();
-
-	*ioapic_map.vir_index_addr=index;
-	io_mfence();
-	ret|=*ioapic_map.vir_data_addr;
-	io_mfence();
-
-	return ret;
-}
-
-void io_apic_rte_write(unsigned char index, unsigned long value){
-	*ioapic_map.vir_index_addr=index;
-	io_mfence();
-	*ioapic_map.vir_data_addr=value&0xffffffff;
-	value>>32;
-	io_mfence();
-
-	*ioapic_map.vir_index_addr=index+1;
-	io_mfence();
-	*ioapic_map.vir_data_addr=value&0xffffffff;
-	io_mfence();
-}
-
 void IOAPIC_init(){
 	*ioapic_map.vir_index_addr=0x00;
 	io_mfence();
@@ -217,10 +261,10 @@ void IOAPIC_init(){
 		*ioapic_map.vir_data_addr,((*ioapic_map.vir_data_addr>>16)&0xff)+1);
 
 	for(int i=0x10;i<0x40;i+=2){
-		io_apic_rte_write(i,0x10020+((i-0x10)>>1));
+		ioapic_rte_write(i,0x10020+((i-0x10)>>1));
 	}
 
-	io_apic_rte_write(0x12,0x21);
+	ioapic_rte_write(0x12,0x21);
 
 	printk(GREEN,BLACK,"IOAPIC redirection table set finished\n");
 }
