@@ -15,9 +15,9 @@ all: system boot
 	#qemu-system-x86_64 -drive format=raw,file=a.img
 
 
-system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o
+system:	head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o
 	ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o task.o cpu.o PIC.o \
+	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o \
 	-T Kernel.lds 
 
 head.o:	head.S
@@ -60,6 +60,8 @@ PIC.o:8259a.c
 	gcc  $(CFLAGS) 8259a.c -o PIC.o
 endif
 
+keyboard.o:keyboard.c
+	gcc  $(CFLAGS) keyboard.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

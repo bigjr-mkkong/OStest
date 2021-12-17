@@ -28,5 +28,7 @@ typedef struct{
 
 irq_desc_T interrupt_desc[NR_IRQS];
 
+int unregister_irq(unsigned long irq);
+
 extern void (* interrupt[24])(void);
 #endif

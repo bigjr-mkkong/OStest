@@ -153,6 +153,59 @@ struct IO_APIC_RET_entry{
 		}destination;
 }__attribute__((packed));
 
+//delivery mode
+#define	APIC_ICR_IOAPIC_Fixed 		 0	//LAPIC	IOAPIC 	ICR
+#define	IOAPIC_ICR_Lowest_Priority 	 1	//	IOAPIC 	ICR
+#define	APIC_ICR_IOAPIC_SMI		 	 2	//LAPIC	IOAPIC 	ICR
+
+#define	APIC_ICR_IOAPIC_NMI		 	 4	//LAPIC	IOAPIC 	ICR
+#define	APIC_ICR_IOAPIC_INIT		 5	//LAPIC	IOAPIC 	ICR
+#define	ICR_Start_up			 	 6	//		ICR
+#define	IOAPIC_ExtINT			 	 7	//	IOAPIC
+
+
+/*
+
+*/
+//timer mode
+#define APIC_LVT_Timer_One_Shot		0
+#define APIC_LVT_Timer_Periodic		1
+#define APIC_LVT_Timer_TSC_Deadline	2
+
+//mask
+#define APIC_ICR_IOAPIC_Masked		1
+#define APIC_ICR_IOAPIC_UN_Masked	0
+
+//trigger mode
+#define APIC_ICR_IOAPIC_Edge		0
+#define APIC_ICR_IOAPIC_Level		1
+
+//delivery status
+#define APIC_ICR_IOAPIC_Idle			0
+#define APIC_ICR_IOAPIC_Send_Pending	1
+
+//destination shorthand
+#define ICR_No_Shorthand			0
+#define ICR_Self					1
+#define ICR_ALL_INCLUDE_Self		2
+#define ICR_ALL_EXCLUDE_Self		3
+
+//destination mode
+#define ICR_IOAPIC_DELV_PHYSICAL	0
+#define ICR_IOAPIC_DELV_LOGIC		1
+
+//level
+#define ICR_LEVEL_DE_ASSERT			0
+#define ICR_LEVLE_ASSERT			1
+
+//remote irr
+#define APIC_IOAPIC_IRR_RESET		0
+#define APIC_IOAPIC_IRR_ACCEPT		1
+
+//pin polarity
+#define APIC_IOAPIC_POLARITY_HIGH	0
+#define APIC_IOAPIC_POLARITY_LOW	1
+
 /*
 ctrl reg for io apic was mapped in FECxy000h(xy means alterable, default: 00)
 IOREGSEL: FECxy000

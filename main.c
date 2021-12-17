@@ -6,6 +6,7 @@
 #include "interrupt.h"
 #include "task.h"
 #include "cpu.h"
+#include "keyboard.h"
 
 #if APIC
 #include "APIC.h"
@@ -63,5 +64,11 @@ void Start_Kernel(void){
 	init_i8295();
 	#endif
 	//task_init();
+
+	keyboard_init();
+
+	while(1){
+		analysis_keycode();
+	}
 	while(1);
 }

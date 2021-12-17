@@ -297,12 +297,12 @@ void APIC_IOAPIC_init(){
 }
 
 void do_IRQ(struct pt_regs *regs,unsigned long nr){ //regs:rsp,nr
-	unsigned char x;
+	//unsigned char x;
 	irq_desc_T *irq=&interrupt_desc[nr-32];
-
+/*
 	x=io_in8(0x60);
 	printk(BLUE,WHITE,"[IRQ%x] keycode: %x\n",nr,x);
-
+*/
 	if(irq->handler!=NULL){
 		irq->handler(nr,irq->parameter,regs);
 	}
@@ -310,11 +310,12 @@ void do_IRQ(struct pt_regs *regs,unsigned long nr){ //regs:rsp,nr
 	if(irq->controller!=NULL&&irq->controller->ack!=NULL){
 		irq->controller->ack(nr);
 	}
+	/*
 	__asm__ __volatile__(
 		"movq $0x00,%%rdx	\n\t"
 		"movq $0x00,%%rax	\n\t"
 		"movq $0x80b,%%rcx	\n\t"
 		"wrmsr				\n\t"
 		:::"memory"
-		);
+		);*/
 }
