@@ -7,6 +7,7 @@
 #include "task.h"
 #include "cpu.h"
 #include "keyboard.h"
+#include "mouse.h"
 
 #if APIC
 #include "APIC.h"
@@ -64,11 +65,18 @@ void Start_Kernel(void){
 	init_i8295();
 	#endif
 	//task_init();
-
+	printk(WHITE,BLACK,"Initializing keyboard driver...\n");
 	keyboard_init();
+	printk(WHITE,BLACK,"Initializing mouse driver...\n");
+	mouse_init();
 
 	while(1){
-		analysis_keycode();
+		if(p_kb->count){
+			analysis_keycode();
+		}
+		if(p_mouse->count){
+			analysis_mousecode();
+		}
 	}
 	while(1);
 }

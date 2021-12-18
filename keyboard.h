@@ -1,5 +1,7 @@
-#ifndef __KEYBOARD__
-#define __KEYBOARD__
+#ifndef __KEYBOARD_H__
+#define __KEYBOARD_H__
+
+extern struct keyboard_input_buf *p_kb;
 
 #define KB_BUF_SIZE     100
 

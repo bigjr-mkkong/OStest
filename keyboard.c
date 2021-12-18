@@ -5,7 +5,7 @@
 #include "memory.h"
 #include "printk.h"
 
-static struct keyboard_input_buf *p_kb=NULL;
+struct keyboard_input_buf *p_kb=NULL;
 static int shift_l,shift_r,ctrl_l,ctrl_r,alt_l,alt_r;
 
 void keyboard_handler(unsigned long nr,unsigned long parameter,struct pt_regs *regs){
