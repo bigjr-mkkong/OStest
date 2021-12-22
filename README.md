@@ -16,11 +16,13 @@ Compiler:
 
 NASM 2.13.02 and GCC 7.5.0
 
+### CPU architecture for the system:
 
+Nehalem
 
 ### How to view this system through simulator:
 
-clone the code in to local computer and make sure the environment has been set up, then use
+clone the code in to local computer(Ubuntu) and make sure the environment has been set up, then use
 
 `make`
 
