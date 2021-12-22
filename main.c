@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "keyboard.h"
 #include "mouse.h"
+#include "disk.h"
 
 #if APIC
 #include "APIC.h"
@@ -39,7 +40,6 @@ void Start_Kernel(void){
 	set_tss64(_stack_start,_stack_start,_stack_start, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
-
 	set_sys_int();
 
 	init_cpu();
@@ -69,7 +69,8 @@ void Start_Kernel(void){
 	keyboard_init();
 	printk(WHITE,BLACK,"Initializing mouse driver...\n");
 	mouse_init();
-
+	printk(WHITE,BLACK,"Initializing disk driver...\n");
+	disk_init();
 	while(1){
 		if(p_kb->count){
 			analysis_keycode();
