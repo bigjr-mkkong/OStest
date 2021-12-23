@@ -5,6 +5,9 @@ CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 Object := head.o entry.o main.o printk.o trap.o memory.o \
 	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o
 
+QemuParameter := -cpu Nehalem,+x2apic -m 512 \
+	-enable-kvm -D ./log.txt -s -S -fda a.img -hdb 80m.img
+
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
@@ -13,14 +16,11 @@ all: system boot
 	sudo cp -fv boot/loader.bin /mnt/floppy/
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
-	#bochs -f bochsrc
-	qemu-system-x86_64 -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img -hdd 80m.img
-	#qemu-system-x86_64 -drive format=raw,file=a.img
+	qemu-system-x86_64 $(QemuParameter)
 
 
 system:	$(Object)
-	ld -b elf64-x86-64 -z muldefs -o system $(Object) \
-	-T Kernel.lds 
+	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 
 
 head.o:	head.S
 	gcc -E  head.S > head.s

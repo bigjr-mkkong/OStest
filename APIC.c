@@ -195,24 +195,6 @@ void local_APIC_init(){
 		:"memory"
 		);
 	printk(WHITE,BLACK,"LVT Masked\n");
-
-	__asm__ __volatile__(
-		"movq $0x808,%%rcx	\n\t"
-		"rdmsr				\n\t"
-		:"=a"(x),"=d"(y)
-		:
-		:"memory"
-		);
-	printk(WHITE,BLACK,"LVT TPR: %x ",x);
-
-	__asm__ __volatile__(
-		"movq $0x80a,%%rcx	\n\t"
-		"rdmsr				\n\t"
-		:"=a"(x),"=d"(y)
-		:
-		:"memory"
-		);
-	printk(WHITE,BLACK,"LVT PPR: %x\n",x);
 }
 
 void IOAPIC_pagetab_init(){
