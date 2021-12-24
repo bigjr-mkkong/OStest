@@ -6,7 +6,7 @@ Object := head.o entry.o main.o printk.o trap.o memory.o \
 	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
-	-enable-kvm -D ./log.txt -s -S -fda a.img -hdb 80m.img
+	-enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img
 
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
