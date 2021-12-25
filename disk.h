@@ -344,7 +344,45 @@ struct Disk_Identify_Info	//ATA/ATAPI-8
 	unsigned short Integrity_word;
 }__attribute__((packed));
 
+#define ATA_READ_CMD	0x24
+#define ATA_WRITE_CMD	0x34
+#define GET_IDENTIFY_DISK_CMD	0xec
+
+struct block_buffer_node{
+	unsigned int count;
+	unsigned char cmd;
+	unsigned long LBA;
+	unsigned char *buffer;
+	void (*end_handler)(unsigned long nr, unsigned long parameter);
+
+	struct List list;
+};
+
+struct request_queue{
+	struct List queue_list;
+	struct block_buffer_node *in_using;
+	long block_request_count;	
+};
+struct request_queue disk_request;
+
+struct block_device_operation{
+	long (*open)();
+	long (*close)();
+	long (*ioctl)(long cmd, long arg);
+	long (*transfer)(long cmd, unsigned long blocks, long count, unsigned char *buffer);
+};
+struct block_device_operation IDE_device_operation;
 
 void disk_init();
+
 void disk_exit();
+
+void write_handler(unsigned long nr, unsigned long parameter);
+void read_handler(unsigned long nr, unsigned long parameter);
+void other_handler(unsigned long nr, unsigned long parameter);
+
+struct block_buffer_node * make_request(long cmd,unsigned long blocks,long count,unsigned char * buffer);
+void add_request(struct block_buffer_node * node);
+long cmd_out();
+void end_request();
 #endif

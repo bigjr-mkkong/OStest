@@ -69,8 +69,25 @@ void Start_Kernel(void){
 	keyboard_init();
 	printk(WHITE,BLACK,"Initializing mouse driver...\n");
 	mouse_init();
+
+	//disk driver test
+	char buf[512];
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
 	disk_init();
+	printk(PURPLE,BLACK,"disk write:\n");
+	memset(buf,0x44,512);
+	IDE_device_operation.transfer(ATA_WRITE_CMD,0x3,1,(unsigned char *)buf);
+
+	printk(PURPLE,BLACK,"disk write end\n");
+
+	printk(PURPLE,BLACK,"disk read:\n");
+	memset(buf,0x00,512);
+	IDE_device_operation.transfer(ATA_READ_CMD,0x3,1,(unsigned char *)buf);
+
+	for(int i=0;i<512;i++)
+		printk(BLACK,WHITE,"%x",buf[i]);
+	printk(PURPLE,BLACK,"\ndisk read end\n");
+
 	while(1){
 		if(p_kb->count){
 			analysis_keycode();
