@@ -168,12 +168,12 @@ long cmd_out(){
 			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>8)&0xff);
 			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>16)&0xff);
 
-			while(!io_in8(PORT_DISK0_STATUS_CMD,node->cmd)&DISK_STATUS_BUSY){
+			while(!(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_READY)){
 				nop();
 			}
 			io_out8(PORT_DISK0_STATUS_CMD,node->cmd);
 
-			while(!io_in8(PORT_DISK0_STATUS_CMD,node->cmd)&DISK_STATUS_REQ){
+			while(!(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_REQ)){
 				nop();
 			}
 			port_outsw(PORT_DISK0_DATA,node->buffer,256);
