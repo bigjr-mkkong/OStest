@@ -355,6 +355,7 @@ struct block_buffer_node{
 	unsigned char *buffer;
 	void (*end_handler)(unsigned long nr, unsigned long parameter);
 
+	unsigned int qnum;
 	struct List list;
 };
 
