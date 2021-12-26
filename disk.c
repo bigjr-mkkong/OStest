@@ -143,7 +143,7 @@ long IDE_transfer(long cmd, unsigned long blocks, long count, unsigned char *buf
 }
 
 long cmd_out(){
-	disk_request.in_using=container_of(list_next(&disk_request.queue_list),struct block_buffer_node,list);
+	disk_request.in_using=phy2vir(container_of(list_next(&disk_request.queue_list),struct block_buffer_node,list));
 	struct block_buffer_node *node=disk_request.in_using;
 	list_del(&disk_request.in_using->list);
 	disk_request.block_request_count--;
@@ -194,7 +194,7 @@ long cmd_out(){
 			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>8)&0xff);
 			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>16)&0xff);
 
-			while(!io_in8(PORT_DISK0_STATUS_CMD,node->cmd)&DISK_STATUS_READY){
+			while(!io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_READY){
 				nop();
 			}
 			io_out8(PORT_DISK0_STATUS_CMD,node->cmd);

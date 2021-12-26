@@ -50,9 +50,9 @@ to compile and load system in to bochs
 
 +APIC - Finished
 
-@@Device drive(keyboard, hdd) - Working@@
++Device drive(keyboard, mouse, hdd) - Working
 
--Task management: - Unfinished
+@@Task management: - Unfinished@@
 
 -MP(IPI) - Unfinished
 
