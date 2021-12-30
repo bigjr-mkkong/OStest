@@ -52,15 +52,17 @@ to compile and load system in to bochs
 
 +Device drive(keyboard, mouse, hdd) - Finished
 
-@@Task management: - Working@@
+@@SMP and IPI - Working@@
 
--MP(IPI) - Unfinished
+-Task management: - Unfinished
 
 -Schd - Unfinished
 
 -Filesystem(FAT32) - Unfinished
 
 -API lib - Unfinished
+
+-Shell - Unfinished
 
 ```
 
