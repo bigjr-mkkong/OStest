@@ -100,6 +100,9 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 			pos.Xposition=0;
 			pos.Yposition++;
 		}
+		if(pos.Yposition>(pos.Yresolution/pos.Ycharsize-1)){
+			pos.Yposition=0;
+		}
 		if((unsigned char)*(buf+i)=='\n'){
 			pos.Yposition++;
 			pos.Xposition=0;

@@ -9,6 +9,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "disk.h"
+#include "SMP.h"
 
 #if APIC
 #include "APIC.h"
@@ -88,6 +89,7 @@ void Start_Kernel(void){
 		printk(BLACK,WHITE,"%x ",buf[i]);
 	printk(PURPLE,BLACK,"\ndisk read end\n");
 
+	SMP_init();
 	while(1){
 		if(p_kb->count){
 			analysis_keycode();

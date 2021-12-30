@@ -3,10 +3,10 @@ PIC := APIC
 CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 
 Object := head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o
+	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
-	-enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img
+	-enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img -smp cores=2
 
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
@@ -70,6 +70,9 @@ mouse.o:mouse.c
 
 disk.o:disk.c
 	gcc  $(CFLAGS) disk.c
+
+SMP.o:SMP.c
+	gcc  $(CFLAGS) SMP.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 
