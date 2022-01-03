@@ -1,6 +1,6 @@
 # OStest
 
-I'm still working on this 64 bits kernel, and the reason is just for fun.
+I'm still working on this 64 bits OS kernel, see TODO for current progress.
 
 ### Environment:
 
@@ -16,7 +16,7 @@ Compiler:
 
 NASM 2.13.02 and GCC 7.5.0
 
-### CPU architecture for the system:
+### CPU architecture for system:
 
 Nehalem
 
@@ -26,7 +26,7 @@ clone the code in to local computer(Ubuntu) and make sure the environment has be
 
 `make`
 
-to compile and load system in to bochs
+to compile and load system in to qemu
 
 ### TODO:
 
@@ -48,7 +48,7 @@ to compile and load system in to bochs
 
 +Slab allocator and kmalloc()/kfree() - Finished
 
-+APIC - Finished
++APIC initialization- Finished
 
 +Device drive(keyboard, mouse, hdd) - Finished
 

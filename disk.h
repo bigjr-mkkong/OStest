@@ -26,6 +26,7 @@
 
 #define PORT_DISK1_ALT_STA_CTL	0x376
 
+//disk status register
 #define DISK_STATUS_BUSY		(1 << 7)
 #define DISK_STATUS_READY		(1 << 6)
 #define DISK_STATUS_SEEK		(1 << 4)
@@ -348,24 +349,27 @@ struct Disk_Identify_Info	//ATA/ATAPI-8
 #define ATA_WRITE_CMD	0x34
 #define GET_IDENTIFY_DISK_CMD	0xec
 
+//data block structure for each disk IO request
 struct block_buffer_node{
-	unsigned int count;
-	unsigned char cmd;
-	unsigned long LBA;
-	unsigned char *buffer;
+	unsigned int count;//number of sectors going to R/W
+	unsigned char cmd;//command send to hdd
+	unsigned long LBA;//LBA address of base sector
+	unsigned char *buffer;//buffer for data
 	void (*end_handler)(unsigned long nr, unsigned long parameter);
-
-	unsigned int qnum;
+// handle function after interrupt received
+	unsigned long qnum;//number of request
 	struct List list;
 };
 
+//queue structure for disk IO
 struct request_queue{
 	struct List queue_list;
 	struct block_buffer_node *in_using;
-	long block_request_count;	
+	long block_request_count;//	
 };
 struct request_queue disk_request;
 
+//Functions assemble for disk IO operation
 struct block_device_operation{
 	long (*open)();
 	long (*close)();

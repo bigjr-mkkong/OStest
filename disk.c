@@ -5,6 +5,11 @@
 #include "printk.h"
 #include "lib.h"
 
+/*
+disk_flags:
+1: Queue is busy
+0: Queue is free
+*/
 static int disk_flags=0;
 static unsigned long query_num=0;
 
@@ -22,7 +27,7 @@ void end_request(){
 
 	disk_flags=0;
 
-	if(disk_request.block_request_count){
+	if(disk_request.block_request_count){// keep sending request to disk
 		cmd_out();
 	}
 }
@@ -57,7 +62,9 @@ void other_handler(unsigned long nr, unsigned long parameter){
 	end_request();
 }
 
-
+/*
+Function to create block_buffer_node structure
+*/
 struct block_buffer_node *make_request(long cmd, unsigned long blocks, long count,\
 	unsigned char *buffer){
 		struct block_buffer_node *node=\
@@ -84,15 +91,20 @@ struct block_buffer_node *make_request(long cmd, unsigned long blocks, long coun
 		node->LBA=blocks;
 		node->count=count;
 		node->buffer=buffer;
-		node->qnum=++query_num;
+		node->qnum=query_num++;
 		return node;
 }
-
+/*
+Function to link each single block_buffer_node in to disk_request->queue_list
+*/
 void add_request(struct block_buffer_node *node){
 	list_add_to_before(&disk_request.queue_list,&node->list);
 	disk_request.block_request_count++;
 }
-
+/*
+Function to add block_buffer_node in to disk_request->queue_list
+and write port 
+*/
 void submit(struct block_buffer_node *node){
 	add_request(node);
 	if(disk_request.in_using==NULL){
@@ -101,22 +113,25 @@ void submit(struct block_buffer_node *node){
 }
 
 void wait_for_finish(){
-	disk_flags=1;
+	disk_flags=1;//set disk in to using status
 	while(disk_flags){
 		nop();
 	}
 }
 
-long IDE_open(){
+long IDE_open(){//TODO
 	printk(BLACK,WHITE,"DISK0 Opened\n");
 	return 1;
 }
 
-long IDE_close(){
+long IDE_close(){//TODO
 	printk(BLACK,WHITE,"DISK0 Closed\n");
 	return 1;
 }
 
+/*
+Function to get disk identification info
+*/
 long IDE_ioctl(long cmd,long arg){
 	struct block_buffer_node *node=NULL;
 	
@@ -129,7 +144,15 @@ long IDE_ioctl(long cmd,long arg){
 	
 	return 0;
 }
+/*
+Function handle sector transfer
 
+cmd: ATA_READ_CMD or ATA_WRITE_CMD
+blocks: LBA address
+count: number of sectors
+*buffer: Input/Output buffer address
+
+*/
 long IDE_transfer(long cmd, unsigned long blocks, long count, unsigned char *buffer){
 	struct block_buffer_node *node=NULL;
 	if(cmd==ATA_READ_CMD||cmd==ATA_WRITE_CMD){
@@ -142,20 +165,25 @@ long IDE_transfer(long cmd, unsigned long blocks, long count, unsigned char *buf
 	return 1;
 }
 
+/*
+Function to send disk operation signal (through port)
+only send out command, disk will send in an interrupt signal if finished||fault
+*/
 long cmd_out(){
+	//Pick block_buffer_node in disk_request and move it in to in_using
 	disk_request.in_using=phy2vir(container_of(list_next(&disk_request.queue_list),struct block_buffer_node,list));
 	struct block_buffer_node *node=disk_request.in_using;
 	list_del(&disk_request.in_using->list);
 	disk_request.block_request_count--;
 
-	while(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_BUSY){
+	while(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_BUSY){//wait if disk busy
 		nop();
 	}
 
 	switch(node->cmd){
 		case ATA_WRITE_CMD:
 			io_out8(PORT_DISK0_DEVICE,0x40);
-
+			// 48 bits LBA address, should divide in to two part and send each of them
 			io_out8(PORT_DISK0_ERR_FEATURE,0);
 			io_out8(PORT_DISK0_SECTOR_CNT,(node->count>>8)&0xff);
 			io_out8(PORT_DISK0_SECTOR_LOW,(node->LBA>>24)&0xff);
@@ -168,11 +196,12 @@ long cmd_out(){
 			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>8)&0xff);
 			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>16)&0xff);
 
+			//if disk not ready, wait
 			while(!(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_READY)){
 				nop();
 			}
 			io_out8(PORT_DISK0_STATUS_CMD,node->cmd);
-
+			//if disk not require for data, wait
 			while(!(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_REQ)){
 				nop();
 			}
@@ -194,6 +223,7 @@ long cmd_out(){
 			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>8)&0xff);
 			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>16)&0xff);
 
+			//if disk not ready, wait
 			while(!io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_READY){
 				nop();
 			}
@@ -206,6 +236,10 @@ long cmd_out(){
 	}
 }
 
+
+/*
+Functions defined to handle disk operation
+*/
 struct block_device_operation IDE_device_operation={
 	.open=IDE_open,
 	.close=IDE_close,
@@ -213,11 +247,18 @@ struct block_device_operation IDE_device_operation={
 	.transfer=IDE_transfer,
 };
 
+//Interrupt handler program for disk
 void disk_handler(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
     struct block_buffer_node *node=((struct request_queue*)parameter)->in_using;
-	node->end_handler(nr,parameter);
+	node->end_handler(nr,parameter);//call end_handler() for disk
 }
 
+/*
+Function to:
+initialize APIC RTE register for hdd
+&& set up interrupt handler for disk
+&& initialize disk request queue
+*/
 void disk_init(){
 	unsigned char a[512];
     struct IO_APIC_RET_entry entry;
