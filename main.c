@@ -67,26 +67,6 @@ void Start_Kernel(void){
 	init_i8295();
 	#endif
 
-	//ICR test
-
-	*(unsigned char*)0xffff800000020000=0xf4;
-	__asm__ __volatile__(
-		"movq $0x00,%%rdx		\n\t"//init IPI
-		"movq $0xc4500,%%rax	\n\t"
-		"movq $0x830,%%rcx		\n\t"
-		"wrmsr					\n\t"
-
-		"movq $0x00,%%rdx		\n\t"//send startup IPI
-		"movq $0xc4620,%%rax	\n\t"
-		"movq $0x830,%%rcx		\n\t"
-		"wrmsr					\n\t"
-
-		"movq $0x00,%%rdx		\n\t"//send startup IPI
-		"movq $0xc4620,%%rax	\n\t"
-		"movq $0x830,%%rcx		\n\t"
-		"wrmsr					\n\t"
-		:::"memory");
-
 /*
 	//task_init();
 	printk(WHITE,BLACK,"Initializing keyboard driver...\n");
@@ -113,6 +93,9 @@ void Start_Kernel(void){
 	printk(PURPLE,BLACK,"\ndisk read end\n");
 */
 	SMP_init();
+	wrmsr(0x830,0xc4500);//init IPI
+	wrmsr(0x830,0xc4620);//send Start-up IPI
+	wrmsr(0x830,0xc4620);//send Start-up IPI
 	/*
 	while(1){
 		if(p_kb->count){

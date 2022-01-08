@@ -1,3 +1,4 @@
+//similiar structure with keyboard.c
 #include "mouse.h"
 #include "keyboard.h"
 #include "lib.h"

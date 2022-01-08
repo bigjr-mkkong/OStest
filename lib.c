@@ -117,7 +117,20 @@ List *list_next(List *entry){
     return NULL;
 }
 
+unsigned long rdmsr(unsigned long address){
+	unsigned int tmp0=0,tmp1=0;
+	__asm__ __volatile__(
+        "rdmsr	\n\t"
+        :"=d"(tmp0),"=a"(tmp1)
+        :"c"(address)
+        :"memory");	
+	return (unsigned long)tmp0<<32|tmp1;
+}
+
 void wrmsr(unsigned long address,unsigned long value){
-    __asm__ __volatile__\
-    ("wrmsr \n\t"::"d"(value >> 32),"a"(value & 0xffffffff),"c"(address):"memory"); 
+	__asm__ __volatile__(
+        "wrmsr	\n\t"
+        :
+        :"d"(value>>32),"a"(value&0xffffffff),"c"(address)
+        :"memory");	
 }

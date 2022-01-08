@@ -25,6 +25,7 @@ void * memcpy (const void *src, void *dest, long len);
 void flush_tlb();
 unsigned long* Get_gdt();
 void io_out8(unsigned short port,unsigned char value);
+unsigned long rdmsr(unsigned long address);
 void wrmsr(unsigned long address,unsigned long value);
 
 typedef struct List{
