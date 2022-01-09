@@ -61,12 +61,47 @@ APU_Code32:
     mov %ax,%fs
     mov %ax,%gs
 
-    hlt
+    /*setup esp value*/
+    leal (APU_boot_tmp_stack_end-APU_boot_base)(%esi),%eax
+    movl %eax,%esp
+
+    /*open PAE*/
+    movl %cr4,%eax
+    or $0x20,%eax
+    movl %eax,%cr4
+
+    /*set page table(page table defined in boot/loader.asm: line 320)*/
+    movl $0x90000,%eax
+    movl %eax,%cr3
+
+    /*enable long mode*/
+    movl $0xc0000080,%ecx
+    rdmsr
+
+    or $0x100,%eax
+    wrmsr
+    
+    /*enable PE and paging system*/
+    movl %cr0,%eax
+    or $0x80000001,%eax
+    movl %eax,%cr0
+
+    /*jump to 64bits code segment*/
+    ljmp *(APU_Code64_vector-APU_boot_base)(%esi)
+
 
 .code64
 .balign 4
 APU_Code64:
+    movq $0x20,%rax
+    movq %rax,%ds
+    movq %rax,%es
+    movq %rax,%fs
+    movq %rax,%ss
+    movq %rax,%gs
 
+    /*TODO: jump to head.S and add a branch for APU in head.S*/
+    hlt
 
 .balign 4
 APU_tmp_IDT:
