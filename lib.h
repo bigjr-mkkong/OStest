@@ -13,6 +13,7 @@
 #define cli()	 	__asm__ __volatile__ ("cli	\n\t":::"memory")
 #define nop() 		__asm__ __volatile__ ("nop	\n\t")
 #define io_mfence() __asm__ __volatile__ ("mfence	\n\t":::"memory")
+#define hlt()		__asm__ __volatile__ ("hlt	\n\t":::"memory")
 
 #define port_insw(port,buffer,nr)	\
 __asm__ __volatile__("cld;rep;insw;mfence;"::"d"(port),"D"(buffer),"c"(nr):"memory")

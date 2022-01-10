@@ -100,7 +100,9 @@ APU_Code64:
     movq %rax,%ss
     movq %rax,%gs
 
-    /*TODO: jump to head.S and add a branch for APU in head.S*/
+    /*jump to head.S*/
+    movq $0x100000,%rax
+    jmpq *%rax
     hlt
 
 .balign 4

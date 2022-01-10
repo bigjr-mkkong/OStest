@@ -31,6 +31,11 @@ entry64:
 	movq %rax,%ss
 	movq _stack_start(%rip),%rsp
 
+	movq $0x1b,%rcx
+	rdmsr
+	bt $8,%rax
+	jnc start_smp
+
 setup_idt:
 	leaq unrecord_int(%rip),%rdx			/*rdx: 64:0 offset of unrecord_int*/
 	movq $(0x08<<16),%rax					/*rax: selecotr*/
@@ -83,6 +88,14 @@ setup_TSS64:
 	pushq %rax
 	lretq
 
+start_smp:
+	movq go_to_smp_kernel(%rip),%rax
+	pushq $0x08
+	pushq %rax
+	lretq
+
+go_to_smp_kernel:
+	.quad Start_SMP
 
 go_to_kernel:
 	.quad 	Start_Kernel
@@ -270,5 +283,5 @@ TSS64_END:
 
 Tss64Ptr:
 Tss64Len:	.word	TSS64_END - LABEL_TSS64 - 1
-.quad	LABEL_TSS64
+Tss64_Base:	.quad	LABEL_TSS64
 

@@ -11,6 +11,7 @@
 #include "disk.h"
 #include "SMP.h"
 
+#define APIC	1	
 #if APIC
 #include "APIC.h"
 #else
@@ -27,6 +28,8 @@ extern char _edata;
 extern char _end;
 
 void Start_Kernel(void){
+	struct INT_CMD_REG icr_entry;
+
 	//setting screen infomatoin
 	pos.Xresolution=1440;
 	pos.Yresolution=900;
@@ -93,9 +96,27 @@ void Start_Kernel(void){
 	printk(PURPLE,BLACK,"\ndisk read end\n");
 */
 	SMP_init();
-	wrmsr(0x830,0xc4500);//init IPI
-	wrmsr(0x830,0xc4620);//send Start-up IPI
-	wrmsr(0x830,0xc4620);//send Start-up IPI
+	//prepare INIT IPI
+	icr_entry.vector=0x0;
+	icr_entry.deliver_mode=APIC_ICR_IOAPIC_INIT;
+	icr_entry.dest_mode=ICR_IOAPIC_DELV_PHYSICAL;
+	icr_entry.deliver_status=APIC_ICR_IOAPIC_Idle;
+	icr_entry.res_1=0;
+	icr_entry.level=ICR_LEVEL_DE_ASSERT;
+	icr_entry.trigger=APIC_ICR_IOAPIC_Edge;
+	icr_entry.res_2=0;
+	icr_entry.dest_shorthand=ICR_ALL_EXCLUDE_Self;
+	icr_entry.res_3=0;
+	icr_entry.destination.x2apic_destination=0x0;
+
+	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send INIT IPI
+	
+	//prepare StartUP IPI
+	icr_entry.vector=0x20;
+	icr_entry.deliver_mode=ICR_Start_up;
+	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI
+	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI
+
 	/*
 	while(1){
 		if(p_kb->count){
