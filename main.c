@@ -41,7 +41,7 @@ void Start_Kernel(void){
 	printk(WHITE,BLACK,"Kernel Started\n");
 	//load TR with selector defined in GDT
 	load_TR(10);
-	set_tss64(_stack_start,_stack_start,_stack_start, 
+	set_tss64(LABEL_TSS64,_stack_start,_stack_start,_stack_start, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
 	set_sys_int();
@@ -112,6 +112,14 @@ void Start_Kernel(void){
 	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send INIT IPI
 	
 	//prepare StartUP IPI
+
+	unsigned int *tss=NULL;
+	_stack_start=(unsigned long)kmalloc(STACK_SIZE,0)+STACK_SIZE;
+	tss=(unsigned int*)kmalloc(128,0);
+	set_tss_descriptor(12,tss);
+
+	set_tss64(tss,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start);
+	
 	icr_entry.vector=0x20;
 	icr_entry.deliver_mode=ICR_Start_up;
 	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI

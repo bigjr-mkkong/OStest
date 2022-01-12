@@ -1,6 +1,7 @@
 #include "SMP.h"
 #include "lib.h"
 #include "printk.h"
+#include "gate.h"
 
 extern unsigned char APU_boot_start[];
 extern unsigned char APU_boot_end[];
@@ -79,5 +80,7 @@ void Start_SMP(){
 		:"memory"
 		);
 	printk(WHITE,BLACK,"APU: x2APIC_ID: %x\n",x);
+    load_TR(12);
+    int i=1/0;
     hlt();
 }
