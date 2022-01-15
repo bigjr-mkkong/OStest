@@ -81,6 +81,14 @@ void IOAPIC_edge_ack(unsigned long irq){
 				:::"memory");
 }
 
+void Local_APIC_edge_level_ack(unsigned long irq){
+	__asm__ __volatile__(	
+				"movq $0x00,%%rdx	\n\t"
+				"movq $0x00,%%rax	\n\t"
+				"movq $0x80b,%%rcx	\n\t"
+				"wrmsr				\n\t"
+				:::"memory");
+}
 
 void local_APIC_init(){
 	unsigned int x,y;
@@ -279,25 +287,27 @@ void APIC_IOAPIC_init(){
 }
 
 void do_IRQ(struct pt_regs *regs,unsigned long nr){ //regs:rsp,nr
-	//unsigned char x;
-	irq_desc_T *irq=&interrupt_desc[nr-32];
-/*
-	x=io_in8(0x60);
-	printk(BLUE,WHITE,"[IRQ%x] keycode: %x\n",nr,x);
-*/
-	if(irq->handler!=NULL){
-		irq->handler(nr,irq->parameter,regs);
-	}
+	switch (nr&0x80){
+		case 0x00:
+			{
+				irq_desc_T *irq=&interrupt_desc[nr-32];
+				if(irq->handler!=NULL){
+					irq->handler(nr,irq->parameter,regs);
+				}
 
-	if(irq->controller!=NULL&&irq->controller->ack!=NULL){
-		irq->controller->ack(nr);
+				if(irq->controller!=NULL&&irq->controller->ack!=NULL){
+					irq->controller->ack(nr);
+				}
+			}
+			break;
+		
+		case 0x80:
+			printk(RED,BLACK,"SMP IPI: %x\n",nr);
+			Local_APIC_edge_level_ack(nr);
+			break;
+
+		default:
+			printk(RED,BLACK,"do_irq() received %x\n",nr);
+		break;
 	}
-	/*
-	__asm__ __volatile__(
-		"movq $0x00,%%rdx	\n\t"
-		"movq $0x00,%%rax	\n\t"
-		"movq $0x80b,%%rcx	\n\t"
-		"wrmsr				\n\t"
-		:::"memory"
-		);*/
 }

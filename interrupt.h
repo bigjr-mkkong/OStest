@@ -27,8 +27,10 @@ typedef struct{
 }irq_desc_T;
 
 irq_desc_T interrupt_desc[NR_IRQS];
+irq_desc_T SMP_IPI_desc[10];
 
 int unregister_irq(unsigned long irq);
 
 extern void (* interrupt[24])(void);
+extern void (* SMP_interrupt[10])(void);
 #endif

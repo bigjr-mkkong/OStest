@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "printk.h"
 #include "gate.h"
+#include "interrupt.h"
 
 extern unsigned char APU_boot_start[];
 extern unsigned char APU_boot_end[];
@@ -25,6 +26,11 @@ void SMP_init(){
     (unsigned char*)0xffff800000020000,\
     (unsigned long)&APU_boot_end-(unsigned long)&APU_boot_start);
     spin_init(&SMP_lock);
+    
+    for(int i=200;i<210;i++){
+        set_intr_gate(i,2,SMP_interrupt[i-200]);
+    }
+    memset(SMP_IPI_desc,0,sizeof(irq_desc_T)*10);
 }
 
 void Start_SMP(){
@@ -84,5 +90,8 @@ void Start_SMP(){
 	printk(WHITE,BLACK,"APU: x2APIC_ID: %x\n",x);
     load_TR(10+(global_i-1)*2);
     spin_unlock(&SMP_lock);
-    hlt();
+    sti();
+    while(1){
+        hlt();
+    }
 }

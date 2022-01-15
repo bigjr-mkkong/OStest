@@ -52,9 +52,9 @@ to compile and load system in to qemu
 
 +Device drive(keyboard, mouse, hdd) - Finished
 
-@@SMP and IPI - Working@@
++SMP and IPI - Finished
 
--Task management: - Unfinished
+@Task management: - Working@
 
 -Schd - Unfinished
 
