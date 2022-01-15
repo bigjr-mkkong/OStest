@@ -1,6 +1,8 @@
 #ifndef __PRINTK_H__
 #define __PRINTK_H__
 
+#include "spinlock.h"
+
 #define WHITE 	0x00ffffff
 #define BLACK 	0x00000000
 #define RED		0x00ff0000
@@ -23,6 +25,8 @@ struct screen{
 
 	int *FB_addr;
 	int FB_len;
+
+	spinlock_T printk_lock;
 }pos;
 
 //char buf[4096]={0};

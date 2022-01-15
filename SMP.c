@@ -5,6 +5,8 @@
 
 extern unsigned char APU_boot_start[];
 extern unsigned char APU_boot_end[];
+extern int global_i;
+
 void SMP_init(){
     unsigned int a,b,c,d;
     for(int i=0;;i++){
@@ -22,12 +24,12 @@ void SMP_init(){
     memcpy(APU_boot_start,\
     (unsigned char*)0xffff800000020000,\
     (unsigned long)&APU_boot_end-(unsigned long)&APU_boot_start);
+    spin_init(&SMP_lock);
 }
 
 void Start_SMP(){
     unsigned long x,y;
-
-    printk(BLACK,WHITE,"APU Started\n");
+    printk(BLACK,WHITE,"APU[%x] Started\n",global_i-1);
     
     //enable xAPIC and x2APIC for APU
     x=y=0;
@@ -80,7 +82,7 @@ void Start_SMP(){
 		:"memory"
 		);
 	printk(WHITE,BLACK,"APU: x2APIC_ID: %x\n",x);
-    load_TR(12);
-    int i=1/0;
+    load_TR(10+(global_i-1)*2);
+    spin_unlock(&SMP_lock);
     hlt();
 }

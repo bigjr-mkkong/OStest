@@ -1,12 +1,15 @@
 PIC := APIC
 
+APUNUM := 3
+
 CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 
 Object := head.o entry.o main.o printk.o trap.o memory.o \
-	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o
+	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o \
+	spinlock.o
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
-	-enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img -smp cores=2
+	-enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img -smp cores=$(APUNUM)
 
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
@@ -31,7 +34,7 @@ entry.o:entry.S
 	as --64 -o entry.o entry.s
 
 main.o:	main.c
-	gcc  $(CFLAGS) main.c -D$(PIC)
+	gcc  $(CFLAGS) main.c -D$(PIC) -D APUNUM=$(APUNUM)
 
 printk.o:printk.c
 	gcc  $(CFLAGS) printk.c
@@ -77,6 +80,9 @@ SMP.o:SMP.c
 APU_boot.o:APU_boot.S
 	gcc -E  APU_boot.S > APU_boot.s
 	as --64 -o APU_boot.o APU_boot.s
+
+spinlock.o:spinlock.c
+	gcc  $(CFLAGS) spinlock.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

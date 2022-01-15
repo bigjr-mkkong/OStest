@@ -12,6 +12,8 @@
 #include "SMP.h"
 
 #define APIC	1	
+#define APUNUM	3
+
 #if APIC
 #include "APIC.h"
 #else
@@ -27,6 +29,8 @@ extern char _etext;
 extern char _edata;
 extern char _end;
 
+int global_i=0;
+
 void Start_Kernel(void){
 	struct INT_CMD_REG icr_entry;
 
@@ -38,6 +42,7 @@ void Start_Kernel(void){
 	pos.Ycharsize=16;
 	pos.FB_addr=(int *)0xffff800003000000;
 	pos.FB_len=(pos.Xresolution*pos.Yresolution*4+PAGE_4K_SIZE-1)&(PAGE_4K_MASK);
+	spin_init(&pos.printk_lock);
 	printk(WHITE,BLACK,"Kernel Started\n");
 	//load TR with selector defined in GDT
 	load_TR(10);
@@ -114,16 +119,21 @@ void Start_Kernel(void){
 	//prepare StartUP IPI
 
 	unsigned int *tss=NULL;
-	_stack_start=(unsigned long)kmalloc(STACK_SIZE,0)+STACK_SIZE;
-	tss=(unsigned int*)kmalloc(128,0);
-	set_tss_descriptor(12,tss);
+	for(global_i=1;global_i<APUNUM;global_i++){
+		spin_lock(&SMP_lock);
+		_stack_start=(unsigned long)kmalloc(STACK_SIZE,0)+STACK_SIZE;
+		tss=(unsigned int*)kmalloc(128,0);
+		set_tss_descriptor(10+global_i*2,tss);
 
-	set_tss64(tss,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start);
-	
-	icr_entry.vector=0x20;
-	icr_entry.deliver_mode=ICR_Start_up;
-	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI
-	wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI
+		set_tss64(tss,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start);
+		icr_entry.vector=0x20;
+		icr_entry.deliver_mode=ICR_Start_up;
+		icr_entry.dest_shorthand=ICR_No_Shorthand;
+		icr_entry.destination.x2apic_destination=global_i;
+
+		wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI
+		wrmsr(0x830,*(unsigned long*)&icr_entry);//Send StartUP IPI
+	}
 
 	/*
 	while(1){

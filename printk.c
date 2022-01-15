@@ -93,6 +93,9 @@ int vsprintf(char *fmt,va_list args){
 
 void printk(int FR_color,int BK_color,char *fmt,...){
 	va_list args;
+
+	spin_lock(&pos.printk_lock);
+
 	va_start(args,fmt);
 	int len=vsprintf(fmt,args);
 	for(int i=0;i<len;i++){
@@ -124,6 +127,7 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 		pos.Yposition*pos.Ycharsize,FR_color,BK_color,*(buf+i));
 		pos.Xposition++;
 	}
+	spin_unlock(&pos.printk_lock);
 }
 
 void frame_buffer_init(){

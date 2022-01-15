@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "memory.h": "c",
-        "interrupt.h": "c"
+        "interrupt.h": "c",
+        "apic.h": "c"
     }
 }
