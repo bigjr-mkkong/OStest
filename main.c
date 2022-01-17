@@ -10,6 +10,7 @@
 #include "mouse.h"
 #include "disk.h"
 #include "SMP.h"
+#include "time.h"
 
 #define APIC	1	
 #define APUNUM	3
@@ -69,13 +70,17 @@ void Start_Kernel(void){
 	//init_i8295();
 	
 	#if APIC
-	//APIC_IOAPIC_init();
-	local_APIC_init();
+	APIC_IOAPIC_init();
 	#else
 	init_i8295();
 	#endif
 
-/*
+	struct time t;
+	get_cmos_time(&t);
+
+	printk(GREEN,PURPLE,"Date: %x/%x/%x\n",t.year,t.month,t.day);
+
+
 	//task_init();
 	printk(WHITE,BLACK,"Initializing keyboard driver...\n");
 	keyboard_init();
@@ -83,6 +88,7 @@ void Start_Kernel(void){
 	mouse_init();
 
 	//disk driver test
+	/*
 	char buf[512];
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
 	disk_init();
@@ -99,7 +105,8 @@ void Start_Kernel(void){
 	for(int i=0;i<512;i++)
 		printk(BLACK,WHITE,"%x ",buf[i]);
 	printk(PURPLE,BLACK,"\ndisk read end\n");
-*/
+	*/
+	printk(WHITE,BLACK,"Initializing SMP...\n");
 	SMP_init();
 	//prepare INIT IPI
 	icr_entry.vector=0x0;
@@ -140,7 +147,7 @@ void Start_Kernel(void){
 	icr_entry.destination.x2apic_destination=1;
 	icr_entry.deliver_mode=APIC_ICR_IOAPIC_Fixed;
 	wrmsr(0x830,*(unsigned long*)&icr_entry);
-	/*
+	
 	while(1){
 		if(p_kb->count){
 			analysis_keycode();
@@ -148,6 +155,6 @@ void Start_Kernel(void){
 		if(p_mouse->count){
 			analysis_mousecode();
 		}
-	}*/
+	}
 	while(1);
 }
