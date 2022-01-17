@@ -54,7 +54,7 @@ to compile and load system in to qemu
 
 +SMP and IPI - Finished
 
-@ Task management: - Working @
+@@Task management: - Working@@
 
 -Schd - Unfinished
 
