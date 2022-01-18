@@ -11,6 +11,8 @@
 #include "disk.h"
 #include "SMP.h"
 #include "time.h"
+#include "HPET.h"
+
 
 #define APIC	1	
 #define APUNUM	3
@@ -75,11 +77,8 @@ void Start_Kernel(void){
 	init_i8295();
 	#endif
 
-	struct time t;
-	get_cmos_time(&t);
-
-	printk(GREEN,PURPLE,"Date: %x/%x/%x\n",t.year,t.month,t.day);
-
+	printk(WHITE,BLACK,"Time&Clock Initializing...\n");
+	HPET_init();
 
 	//task_init();
 	printk(WHITE,BLACK,"Initializing keyboard driver...\n");

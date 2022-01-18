@@ -11,5 +11,6 @@ struct time{
 };
 
 void get_cmos_time(struct time *t);
+struct time t;
 
 #endif
