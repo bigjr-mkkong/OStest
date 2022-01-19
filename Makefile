@@ -6,7 +6,7 @@ CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 
 Object := head.o entry.o main.o printk.o trap.o memory.o \
 	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o \
-	spinlock.o time.o HPET.o 
+	spinlock.o time.o HPET.o softirq.o timer.o 	
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
 	-enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img -smp cores=$(APUNUM)
@@ -89,6 +89,12 @@ time.o:time.c
 
 HPET.o:HPET.c
 	gcc  $(CFLAGS) HPET.c
+
+softirq.o:softirq.c
+	gcc  $(CFLAGS) softirq.c
+
+timer.o:timer.c
+	gcc  $(CFLAGS) timer.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

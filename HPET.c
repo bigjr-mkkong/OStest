@@ -4,6 +4,8 @@
 #include "APIC.h"
 #include "interrupt.h"
 #include "time.h"
+#include "timer.h"
+#include "softirq.h"
 
 extern struct time t;
 
@@ -17,7 +19,8 @@ hw_int_controller HPET_int_controller =
 };
 
 void HPET_handler(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
-    printk(RED,WHITE,"(HPET)\n");
+    HPET_counter++;
+    set_softirq_status(TIMER_SIRQ);
 }
 
 void HPET_init(){

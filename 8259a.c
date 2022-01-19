@@ -8,7 +8,7 @@
 
 void init_i8295(){
 	for(int i=32;i<56;i++){
-		set_intr_gate(i,2,interrupt[i-32]);
+		set_intr_gate(i,0,interrupt[i-32]);
 	}
 
 	printk(RED,BLACK,"8259A init \n");

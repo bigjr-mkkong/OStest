@@ -12,7 +12,8 @@
 #include "SMP.h"
 #include "time.h"
 #include "HPET.h"
-
+#include "softirq.h"
+#include "timer.h"
 
 #define APIC	1	
 #define APUNUM	3
@@ -77,7 +78,11 @@ void Start_Kernel(void){
 	init_i8295();
 	#endif
 
+	printk(WHITE,BLACK,"Soft IRQ Initializing...\n");
+	softirq_init();
+
 	printk(WHITE,BLACK,"Time&Clock Initializing...\n");
+	timer_init();
 	HPET_init();
 
 	//task_init();
