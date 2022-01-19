@@ -2,6 +2,7 @@
     "files.associations": {
         "memory.h": "c",
         "interrupt.h": "c",
-        "apic.h": "c"
+        "apic.h": "c",
+        "timer.h": "c"
     }
 }

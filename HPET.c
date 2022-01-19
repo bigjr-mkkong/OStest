@@ -20,7 +20,9 @@ hw_int_controller HPET_int_controller =
 
 void HPET_handler(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
     HPET_counter++;
-    set_softirq_status(TIMER_SIRQ);
+    if(container_of(list_next(&timer_list_head.list),struct timer_list,list)->expired_jiffies<=HPET_counter){
+        set_softirq_status(TIMER_SIRQ);
+    }
 }
 
 void HPET_init(){
