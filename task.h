@@ -60,27 +60,54 @@ struct thread_struct{
 	unsigned long trap_nr;
 	unsigned long error_code;
 };
-#define PF_KTHREAD	(1 << 0)
+#define PF_KTHREAD		(1UL<<0)
+#define NEED_SCHEDULE	(1UL<<1)
 
 struct task_struct{
-	struct List list;
 	volatile long state;
 	unsigned long flags;
+	long signal;
 
+	struct List list;
 	struct mm_struct *mm;
 	struct thread_struct *thread;
 
 	unsigned long addr_limit; 		//canonical address
 	long pid;
-	long counter;
-	long signal;
 	long priority;
+	long vir_runtime;
 };
 
 union task_union{
 	struct task_struct task;
 	unsigned long stack[STACK_SIZE/sizeof(unsigned long)];
 }__attribute((align(8)))__;
+
+/*	
+task_struct:
+	HIGH ADDR
+	#################
+	|				|
+	|	  REGS		|
+	|				|
+	#################
+	|				|<= RSP(move up during kernel_thread_func(), then move downward)
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	#################
+	|				|
+	|	  PCB		|
+	|				|
+	##################
+	LOW ADDR
+*/
 
 struct mm_struct init_mm;
 struct thread_struct init_thread;
@@ -93,9 +120,9 @@ struct thread_struct init_thread;
 	.thread=&init_thread,\
 	.addr_limit=0xffff800000000000,\
 	.pid=0,\
-	.counter=1,\
 	.signal=0,\
-	.priority=0\
+	.priority=2,\
+	.vir_runtime=0\
 }\
 
 
@@ -180,8 +207,8 @@ then it will call __switch_to() and pass the value of RDI and RSI into it
 */
 #define switch_to(prev,next)\
 do{	\
-	while(0);\
-	__asm__ __volatile__ ("pushq %%rbp \n\t"\
+	__asm__ __volatile__ (\
+			"pushq %%rbp \n\t"\
             "pushq %%rax \n\t"\
             "movq %%rsp, %0 \n\t"\
             "movq %2, %%rsp \n\t"\

@@ -78,11 +78,16 @@
 //7,1,0
 #define	PAGE_KERNEL_Page	(PAGE_PS  | PAGE_R_W | PAGE_Present)
 
+//1,0
+#define PAGE_USER_GDT		(PAGE_U_S | PAGE_R_W | PAGE_Present)
+
 //2,1,0
 #define PAGE_USER_Dir		(PAGE_U_S | PAGE_R_W | PAGE_Present)
 
 //7,2,1,0
 #define	PAGE_USER_Page		(PAGE_PS  | PAGE_U_S | PAGE_R_W | PAGE_Present)
+
+
 
 
 typedef struct {unsigned long pml4t;} pml4t_t;

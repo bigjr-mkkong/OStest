@@ -14,6 +14,7 @@
 #include "HPET.h"
 #include "softirq.h"
 #include "timer.h"
+#include "schedule.h"
 
 #define APIC	1	
 #define APUNUM	3
@@ -78,14 +79,12 @@ void Start_Kernel(void){
 	init_i8295();
 	#endif
 
+	printk(WHITE,BLACK,"Schedule Initializing...\n");
+	schedule_init();
+
 	printk(WHITE,BLACK,"Soft IRQ Initializing...\n");
 	softirq_init();
 
-	printk(WHITE,BLACK,"Time&Clock Initializing...\n");
-	timer_init();
-	HPET_init();
-
-	//task_init();
 	printk(WHITE,BLACK,"Initializing keyboard driver...\n");
 	keyboard_init();
 	printk(WHITE,BLACK,"Initializing mouse driver...\n");
@@ -152,6 +151,11 @@ void Start_Kernel(void){
 	icr_entry.deliver_mode=APIC_ICR_IOAPIC_Fixed;
 	wrmsr(0x830,*(unsigned long*)&icr_entry);
 	
+	printk(WHITE,BLACK,"Time&Clock Initializing...\n");
+	timer_init();
+	HPET_init();
+	printk(WHITE,BLACK,"Task Initializing...\n");
+	task_init();
 	while(1){
 		if(p_kb->count){
 			analysis_keycode();

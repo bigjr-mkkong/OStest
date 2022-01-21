@@ -25,6 +25,10 @@ RFLAGS=0xa8
 OLDRSP=0xb0
 OLDSS=0xb8
 
+/*offset for member in task_struct*/
+TASK_STATE=0x00
+TASK_FLAGS=0x08
+TASK_SIGNAL=0x10
 
 RESTORE_ALL:
 	popq %r15
@@ -49,23 +53,34 @@ RESTORE_ALL:
 	addq $0x10,%rsp	
 	iretq
 
+#define GET_CURRENT(reg)\
+	movq $-32768,reg;\
+	andq  %rsp,reg
+
 ret_from_exception:
 	
 
 ENTRY(ret_from_intr)
 	movq $-1,%rcx
-	testq softirq_status(%rip),%rcx
+	testq softirq_status(%rip),%rcx		/*check for soft irq*/
 	jnz softirq_handler
+	GET_CURRENT(%rbx)
+	movq TASK_FLAGS(%rbx),%rcx		/*if NEED_SCHEDULE digit set, schedule process*/
+	testq $2,%rcx
+	jnz reschedule
 	jmp	RESTORE_ALL
 
 softirq_handler:
 	callq do_softirq
 	jmp RESTORE_ALL
 
+reschedule:
+	call schedule
+	jmp RESTORE_ALL
+
 ENTRY(system_call)
 	sti
 	subq $0x38,%rsp			 
-	cld;					 
 
 	pushq %rax;				 	
 	movq %es,%rax;			 	
