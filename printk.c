@@ -103,7 +103,10 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 			pos.Xposition=0;
 			pos.Yposition++;
 		}
-		if(pos.Yposition>(pos.Yresolution/pos.Ycharsize-1)){
+		if(pos.Yposition>=(pos.Yresolution/pos.Ycharsize)){
+			/*pos.Yposition=pos.Yresolution/pos.Ycharsize-1;
+            memcpy(pos.FB_addr+pos.Xresolution*16,pos.FB_addr,pos.Xresolution*(pos.Yresolution-16)*4);
+            memset(pos.FB_addr+pos.Xresolution*(pos.Yresolution-16),0,pos.Xresolution*16*4);*/
 			pos.Yposition=0;
 		}
 		if((unsigned char)*(buf+i)=='\n'){

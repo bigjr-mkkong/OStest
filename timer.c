@@ -15,7 +15,7 @@ void do_timer(void *data){
         tmp->func(tmp->data);
         tmp=phy2vir(container_of(list_next(&tmp->list),struct timer_list,list));
     }
-    printk(BLACK,WHITE,"HPET_counter: %x\n",HPET_counter);
+    //printk(BLACK,WHITE,"HPET_counter: %x\n",HPET_counter);
 }
 
 void test_timer(){

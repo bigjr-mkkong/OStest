@@ -62,7 +62,7 @@ ret_from_exception:
 
 ENTRY(ret_from_intr)
 	movq $-1,%rcx
-	testq softirq_status(%rip),%rcx
+	testq softirq_status(%rip),%rcx		/*check for soft irq*/
 	jnz softirq_handler
 	GET_CURRENT(%rbx)
 	movq TSK_FLAGS(%rbx),%rcx
@@ -85,7 +85,6 @@ reschedule:
 ENTRY(system_call)
 	sti
 	subq $0x38,%rsp			 
-	cld;					 
 
 	pushq %rax;				 	
 	movq %es,%rax;			 	

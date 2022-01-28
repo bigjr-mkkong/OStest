@@ -18,6 +18,4 @@ void schedule();
 void insert_task_queue(struct task_struct *tsk);
 struct task_struct *get_next_task();
 
-int debugvar=0;
-
 #endif

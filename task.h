@@ -69,9 +69,9 @@ struct task_struct{
 	unsigned long flags;
 	long signal;
 
+	struct List list;
 	struct mm_struct *mm;
 	struct thread_struct *thread;
-	struct List list;
 
 	unsigned long addr_limit; 		//canonical address
 	long pid;
@@ -83,6 +83,32 @@ union task_union{
 	struct task_struct task;
 	unsigned long stack[STACK_SIZE/sizeof(unsigned long)];
 }__attribute((align(8)))__;
+
+/*	
+task_struct:
+	HIGH ADDR
+	#################
+	|				|
+	|	  REGS		|
+	|				|
+	#################
+	|				|<= RSP(move up during kernel_thread_func(), then move downward)
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	|				|
+	#################
+	|				|
+	|	  PCB		|
+	|				|
+	##################
+	LOW ADDR
+*/
 
 struct mm_struct init_mm;
 

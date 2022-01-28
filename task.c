@@ -43,8 +43,6 @@ unsigned long do_execve(struct pt_regs *regs){
 	regs->es = 0;
 	printk(RED,BLACK,"do_execve task is running\n");
 
-	debugvar=1;
-
 	Global_CR3 = Get_gdt();
 
 	tmp = phy2vir((unsigned long *)((unsigned long)Global_CR3 & (~ 0xfffUL)) + ((addr >> PAGE_GDT_SHIFT) & 0x1ff));
@@ -61,19 +59,20 @@ unsigned long do_execve(struct pt_regs *regs){
 	p = alloc_pages(ZONE_NORMAL,1,PG_PTable_Maped);
 	set_pdt(tmp,mk_pdt(p->phy_addr,PAGE_USER_Page));
 
-	printk(RED,GREEN,"----------------------->Sentry<---------------------\n");
 	flush_tlb();
-
 
 	if(!(current->flags & PF_KTHREAD))
 		current->addr_limit = 0xffff800000000000;
 
-	while(1);
 	memcpy(user_level_function,(void *)0x800000,1024);
-
+	while(1);
 	return 1;
 }
 extern void kernel_thread_func(void);
+/*
+kernel_thread_func() runs before task, in order to pop context stored in 
+stack in to registers(context will be stored in stack by do_fork())
+*/
 void kernel_thread_func(){
 	__asm__ __volatile__ (
 		"sti		\n\t"
@@ -165,7 +164,6 @@ void task_init(){
 		init_tss[0].ist6,init_tss[0].ist7);
 
 	init_tss[0].rsp0=init_thread.rsp0;
-
 	list_init(&init_task_union.task.list);
 	//setting the first thread in init()
 	//entry funciton is kernel_thread_func in order to recover the context
@@ -216,6 +214,7 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 	memset(thd,0,sizeof(*thd));
 	tsk->thread=thd;
 
+	//copy runtime context(registers value) in to stack
 	memcpy(regs,(void *)((unsigned long)tsk+STACK_SIZE-sizeof(struct pt_regs)),\
 		sizeof(struct pt_regs));
 
