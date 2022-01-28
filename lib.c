@@ -100,6 +100,14 @@ void list_add_to_before(List *entry,List *newnode){
 }
 
 void list_del(List *entry){
+    if(entry->prev->next!=entry){
+        entry->next->prev=entry->next;
+        return;
+    }
+    if(entry->next->prev!=entry){
+        entry->prev->next=entry->prev;
+        return;
+    }
     entry->prev->next=entry->next;
     entry->next->prev=entry->prev;
     return;

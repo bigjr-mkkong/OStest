@@ -7,13 +7,13 @@
 
 void do_timer(void *data){
     //printk(BLACK,WHITE,"HPET_counter: %x\n",HPET_counter);
-    struct timer_list *tmp=container_of\
-        (list_next(&timer_list_head.list),struct timer_list,list);
+    struct timer_list *tmp=phy2vir(container_of\
+        (list_next(&timer_list_head.list),struct timer_list,list));
 
     while((!list_is_empty(timer_list_head.list))&&(tmp->expired_jiffies<=HPET_counter)){
         del_timer(tmp);
         tmp->func(tmp->data);
-        tmp=container_of(list_next(&tmp->list),struct timer_list,list);
+        tmp=phy2vir(container_of(list_next(&tmp->list),struct timer_list,list));
     }
     printk(BLACK,WHITE,"HPET_counter: %x\n",HPET_counter);
 }
@@ -25,12 +25,13 @@ void test_timer(){
 void timer_init(){
     struct timer_list *tmp=NULL;
     HPET_counter=0;
+    /*
     init_new_timer(&timer_list_head,NULL,NULL,-1UL);
     register_softirq(0,&do_timer,NULL);
 
     tmp=(struct timer_list*)kmalloc(sizeof(struct timer_list),0);
     init_new_timer(tmp,&test_timer,NULL,100);
-    add_timer(tmp);
+    add_timer(tmp);*/
 }
 
 void init_new_timer(struct timer_list *timer, void (*func)(void *data),void *data,\
@@ -58,5 +59,5 @@ void add_timer(struct timer_list *timer){
 }
 
 void del_timer(struct timer_list *timer){
-    list_del(timer->list);
+    list_del(&timer->list);
 }

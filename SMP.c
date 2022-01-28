@@ -3,6 +3,7 @@
 #include "printk.h"
 #include "gate.h"
 #include "interrupt.h"
+#include "task.h"
 
 extern unsigned char APU_boot_start[];
 extern unsigned char APU_boot_end[];
@@ -88,6 +89,7 @@ void Start_SMP(){
 		:"memory"
 		);
 	printk(WHITE,BLACK,"APU: x2APIC_ID: %x\n",x);
+    memset(current,0,sizeof(struct task_struct));
     load_TR(10+(global_i-1)*2);
     spin_unlock(&SMP_lock);
     sti();

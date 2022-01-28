@@ -1,10 +1,10 @@
 #ifndef __GATE_H__
 #define __GATE_H__
 
-typedef unsigned long long		u64;
-typedef unsigned int 			u32;
-typedef unsigned short			u16;
-typedef unsigned char			u8;
+typedef unsigned long		u64;
+typedef unsigned int 		u32;
+typedef unsigned short		u16;
+typedef unsigned char		u8;
 typedef	void	(*int_handler) ();
 
 struct gate_struct{
@@ -60,19 +60,19 @@ void set_system_intr_gate(u8 vector,u8 ist, int_handler handler){
 	set_idt_desc(vector,ist,0xEE,handler);	//P,DPL=3,TYPE=E
 }
 
-void set_tss64(u32 *table,u32 rsp0,u32 rsp1,u32 rsp2,u32 ist1,u32 ist2,u32 ist3,u32 ist4,u32 ist5,
-	u32 ist6,u32 ist7){
-	*(u32*)(table+1)=rsp0;
-	*(u32*)(table+3)=rsp1;
-	*(u32*)(table+5)=rsp2;
+void set_tss64(u32 *table,u64 rsp0,u64 rsp1,u64 rsp2,u64 ist1,u64 ist2,u64 ist3,u64 ist4,u64 ist5,
+	u64 ist6,u64 ist7){
+	*(u64*)(table+1)=rsp0;
+	*(u64*)(table+3)=rsp1;
+	*(u64*)(table+5)=rsp2;
 
-	*(u32*)(table+9)=ist1;
-	*(u32*)(table+11)=ist2;
-	*(u32*)(table+13)=ist3;
-	*(u32*)(table+15)=ist4;
-	*(u32*)(table+17)=ist5;
-	*(u32*)(table+19)=ist6;
-	*(u32*)(table+21)=ist7;	
+	*(u64*)(table+9)=ist1;
+	*(u64*)(table+11)=ist2;
+	*(u64*)(table+13)=ist3;
+	*(u64*)(table+15)=ist4;
+	*(u64*)(table+17)=ist5;
+	*(u64*)(table+19)=ist6;
+	*(u64*)(table+21)=ist7;	
 }
 
 void set_tss_descriptor(u32 n,void *addr){

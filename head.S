@@ -212,8 +212,6 @@ __PDE:
 	.quad	0x2c00083
 	.quad	0x2e00083
 
-
-
 	.quad	0xfd000083		/*0x 3000000*/
 	.quad	0xfd200083
 	.quad	0xfd400083
@@ -251,7 +249,7 @@ __PDE:
 	LABEL_DESC_USER_DATA64:		.quad	0x0000f20000000000
 	LABEL_DESC_KERNEL_CODE32:	.quad	0x00cf9a000000ffff
 	LABEL_DESC_KERNEL_DATA32:	.quad 	0x00cf92000000ffff
-	.fill 10,8,0
+	.fill 100,8,0
 GDT_END:
 		
 .equ	SelectorData64 , LABEL_DESC_KERNEL_DATA64 - LABEL_GDT64

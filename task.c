@@ -2,11 +2,13 @@
 #include "printk.h"
 #include "gate.h"
 #include "memory.h"
+#include "schedule.h"
 
 extern void ret_system_call(void);
 extern void system_call(void);
 
 void user_level_function(){
+	/*
 	long ret = 0;
 	char str[]="Hello World!\n";
 
@@ -17,6 +19,10 @@ void user_level_function(){
 					"sysexit_return_address:	\n\t"
 					:"=a"(ret):"0"(1),"D"(str):"memory"
 					);	
+					*/
+	
+	printk(WHITE,BLACK,"user level programming is running\n");
+
 	while(1);
 }
 
@@ -25,21 +31,52 @@ unsigned long  system_call_function(struct pt_regs * regs){
 }
 
 unsigned long do_execve(struct pt_regs *regs){
-	regs->rdx=0x800000;	//rip
-	regs->rcx=0xa00000;	//rsp
-	regs->rax=0;	
-	regs->ds=0;
-	regs->es=0;
-
+	unsigned long addr = 0x800000;
+	unsigned long * tmp;
+	unsigned long * virtual = NULL;
+	struct page * p = NULL;
+	
+	regs->rdx = 0x800000;	//RIP
+	regs->rcx = 0xa00000;	//RSP
+	regs->rax = 1;	
+	regs->ds = 0;
+	regs->es = 0;
 	printk(RED,BLACK,"do_execve task is running\n");
 
+	debugvar=1;
+
+	Global_CR3 = Get_gdt();
+
+	tmp = phy2vir((unsigned long *)((unsigned long)Global_CR3 & (~ 0xfffUL)) + ((addr >> PAGE_GDT_SHIFT) & 0x1ff));
+
+	virtual = kmalloc(PAGE_4K_SIZE,0);
+	printk(WHITE,BLACK,"tmp: %x\n",tmp);
+	set_mpl4t(tmp,mk_mpl4t(vir2phy(virtual),PAGE_USER_GDT));
+
+	tmp = phy2vir((unsigned long *)(*tmp & (~ 0xfffUL)) + ((addr >> PAGE_1G_SHIFT) & 0x1ff));
+	virtual = kmalloc(PAGE_4K_SIZE,0);
+	set_pdpt(tmp,mk_pdpt(vir2phy(virtual),PAGE_USER_Dir));
+
+	tmp = phy2vir((unsigned long *)(*tmp & (~ 0xfffUL)) + ((addr >> PAGE_2M_SHIFT) & 0x1ff));
+	p = alloc_pages(ZONE_NORMAL,1,PG_PTable_Maped);
+	set_pdt(tmp,mk_pdt(p->phy_addr,PAGE_USER_Page));
+
+	printk(RED,GREEN,"----------------------->Sentry<---------------------\n");
+	flush_tlb();
+
+
+	if(!(current->flags & PF_KTHREAD))
+		current->addr_limit = 0xffff800000000000;
+
+	while(1);
 	memcpy(user_level_function,(void *)0x800000,1024);
 
-	return 0;
+	return 1;
 }
 extern void kernel_thread_func(void);
 void kernel_thread_func(){
-	__asm__ (
+	__asm__ __volatile__ (
+		"sti		\n\t"
 		"popq %r15 \n\t"
 		"popq %r14 \n\t"
 		"popq %r13 \n\t"
@@ -60,7 +97,7 @@ void kernel_thread_func(){
 		"movq %rax,%es \n\t"
 		"popq %rax \n\t"
 		"addq $0x38,%rsp \n\t"
-		"movq %rcx, %rdi \n\t"
+		"movq %rdx, %rdi \n\t"
 		"callq *%rcx \n\t"
 		"movq %rax, %rdi \n\t"
 		"callq do_exit \n\t"
@@ -68,19 +105,21 @@ void kernel_thread_func(){
 }
 
 unsigned long init(unsigned long arg){
-	struct pt_regs *regs;
 
 	printk(RED,BLACK,"init task is running,arg:%d\n",arg);
 
+	struct pt_regs *regs;
 	current->thread->rip=(unsigned long)ret_system_call;
 	current->thread->rsp=(unsigned long)current + STACK_SIZE - sizeof(struct pt_regs);
 	regs=(struct pt_regs *)current->thread->rsp;
+	current->flags=0;
 
 	__asm__	__volatile__(	
 				"movq %1,%%rsp	\n\t"
 				"pushq %2 		\n\t"
 				"jmp do_execve	\n\t"
 				::"D"(regs),"m"(current->thread->rsp),"m"(current->thread->rip):"memory");
+
 	return 1;
 }
 
@@ -96,11 +135,12 @@ void __switch_to(struct task_struct *prev,struct task_struct *next){
 
 	__asm__ __volatile__("movq %0,%%fs \n\t"::"a"(next->thread->fs));
 	__asm__ __volatile__("movq %0,%%gs \n\t"::"a"(next->thread->gs));
-	
+
+	wrmsr(0x175,next->thread->rsp0);
 }
 
 void task_init(){
-	struct task_struct *p=NULL;
+	struct task_struct *tmp=NULL;
 	init_mm.pgd=(pml4t_t *)Global_CR3;
 	init_mm.start_code=mman_struct.start_code;
 	init_mm.end_code=mman_struct.end_code;
@@ -120,20 +160,19 @@ void task_init(){
 	wrmsr(0x175,current->thread->rsp0);
 	wrmsr(0x176,(unsigned long)system_call);
 
-	set_tss64(LABEL_TSS64,init_tss[0].rsp0,init_tss[0].rsp1,init_tss[0].rsp2,init_tss[0].ist1,\
+	set_tss64(LABEL_TSS64,init_thread.rsp0,init_tss[0].rsp1,init_tss[0].rsp2,init_tss[0].ist1,\
 		init_tss[0].ist2,init_tss[0].ist3,init_tss[0].ist4,init_tss[0].ist5,\
 		init_tss[0].ist6,init_tss[0].ist7);
 
 	init_tss[0].rsp0=init_thread.rsp0;
 
 	list_init(&init_task_union.task.list);
-
 	//setting the first thread in init()
 	//entry funciton is kernel_thread_func in order to recover the context
-	kernel_thread(init,10,CLONE_FS|CLONE_FILES|CLONE_SIGNAL);
+	kernel_thread(init,0xff,CLONE_FS|CLONE_FILES|CLONE_SIGNAL);
 	init_task_union.task.state=TASK_RUNNING;
-	p=container_of(list_next(&current->list),struct task_struct,list);
-	switch_to(current,p);
+	//tmp=container_of(list_next(&task_schedule.task_queue.list),struct task_struct,list);
+	//switch_to(current,tmp);
 }
 
 int kernel_thread(unsigned long (*fn)(unsigned long),unsigned long arg,unsigned long flags){
@@ -164,15 +203,17 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 
 	tsk=(struct task_struct*) phy2vir(p->phy_addr);
 
-	memset(tsk,0,sizeof(tsk));
+	memset(tsk,0,sizeof(*tsk));
 	*tsk=*current;
 
 	list_init(&tsk->list);
-	list_add_to_before(&init_task_union.task.list,&tsk->list);
+	//list_add_to_before(&init_task_union.task.list,&tsk->list);
 	tsk->pid++;
 	tsk->state=TASK_UNINTERRUPTIBLE;
+	tsk->priority=2;
 
 	thd=(struct thread_struct *)(tsk+1);
+	memset(thd,0,sizeof(*thd));
 	tsk->thread=thd;
 
 	memcpy(regs,(void *)((unsigned long)tsk+STACK_SIZE-sizeof(struct pt_regs)),\
@@ -188,12 +229,12 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 		thd->rip=regs->rip=(unsigned long)ret_system_call;
 
 	tsk->state=TASK_RUNNING;
-
-	return 0;
+	insert_task_queue(tsk);
+	return 1;
 }
 
 unsigned long do_exit(unsigned long code){
-	printk(RED,BLACK,"exit() task is running\n");
+	printk(RED,BLACK,"exit() task is running, code: %x\n",code);
 	while(1);
 }
 

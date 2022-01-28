@@ -25,6 +25,9 @@ RFLAGS=0xa8
 OLDRSP=0xb0
 OLDSS=0xb8
 
+TSK_STATE=0x0
+TSK_FLAGS=0x08
+TSK_SIGNAL=0x10
 
 RESTORE_ALL:
 	popq %r15
@@ -49,6 +52,11 @@ RESTORE_ALL:
 	addq $0x10,%rsp	
 	iretq
 
+#define GET_CURRENT(reg)	\
+	movq $-32768,reg;	\
+	andq %rsp,reg
+
+
 ret_from_exception:
 	
 
@@ -56,10 +64,22 @@ ENTRY(ret_from_intr)
 	movq $-1,%rcx
 	testq softirq_status(%rip),%rcx
 	jnz softirq_handler
+	GET_CURRENT(%rbx)
+	movq TSK_FLAGS(%rbx),%rcx
+	testq $2,%rcx
+	jnz reschedule
 	jmp	RESTORE_ALL
 
 softirq_handler:
 	callq do_softirq
+	GET_CURRENT(%rbx)
+	movq TSK_FLAGS(%rbx),%rcx
+	testq $2,%rcx
+	jnz reschedule
+	jmp RESTORE_ALL
+
+reschedule:
+	call schedule
 	jmp RESTORE_ALL
 
 ENTRY(system_call)
@@ -94,7 +114,7 @@ ENTRY(system_call)
 			
 	callq	system_call_function
 
-ENTRY(ret_system_call)						
+ENTRY(ret_system_call)			
 	movq %rax,0x80(%rsp)		 
 	popq %r15				 
 	popq %r14
