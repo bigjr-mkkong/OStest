@@ -1,0 +1,37 @@
+#include "atomic.h"
+
+void atomic_addition(atomic_T *atomic, long value){
+    __asm__ __volatile__(
+        "lock addq %1,%0    \n\t"
+        :"=m"(atomic)
+        :"r"(value)
+        :"memory"
+    );
+}
+
+void atomic_sub(atomic_T *atomic, long value){
+    __asm__ __volatile__(
+        "lock subq %1,%0    \n\t"
+        :"=m"(atomic)
+        :"r"(value)
+        :"memory"
+    );
+}
+
+void atomic_inc(atomic_T *atomic){
+    __asm__ __volatile__(
+        "lock incq %0   \n\t"
+        :"=m"(atomic)
+        :
+        :"memory"
+    );
+}
+
+void atomic_dec(atomic_T *atomic){
+    __asm__ __volatile__(
+        "lock decq %0   \n\t"
+        :"=m"(atomic)
+        :
+        :"memory"
+    );
+}

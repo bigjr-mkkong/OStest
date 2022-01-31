@@ -39,7 +39,7 @@ void schedule(){
 	current->flags &= ~NEED_SCHEDULE;
 	tsk = get_next_task();
 
-	printk(RED,BLACK,"schedule() next task:%x HPET_counter: %x\n",tsk,HPET_counter);
+	printk(PURPLE,WHITE,"schedule() next task:%x HPET_counter: %x\n",tsk,HPET_counter);
 
 	if(current->vir_runtime >= tsk->vir_runtime){
 		if(current->state == TASK_RUNNING)

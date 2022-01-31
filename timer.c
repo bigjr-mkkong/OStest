@@ -25,9 +25,8 @@ void test_timer(){
 void timer_init(){
     struct timer_list *tmp=NULL;
     HPET_counter=0;
-    /*
-    init_new_timer(&timer_list_head,NULL,NULL,-1UL);
     register_softirq(0,&do_timer,NULL);
+    /*init_new_timer(&timer_list_head,NULL,NULL,-1UL);
 
     tmp=(struct timer_list*)kmalloc(sizeof(struct timer_list),0);
     init_new_timer(tmp,&test_timer,NULL,100);
