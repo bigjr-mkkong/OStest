@@ -35,3 +35,21 @@ void atomic_dec(atomic_T *atomic){
         :"memory"
     );
 }
+
+void atomic_set_mask(atomic_T *atomic,long mask){
+    __asm__ __volatile__(
+        "lock orq %1,%0"
+        :"=m"(atomic->value)
+        :"r"(mask)
+        :"memory"
+    );
+}
+
+void atomic_clear_mask(atomic_T *atomic,long mask){
+    __asm__ __volatile__(
+        "lock andq %1,%0"
+        :"=m"(atomic->value)
+        :"r"(~(mask))
+        :"memory"
+    );
+}

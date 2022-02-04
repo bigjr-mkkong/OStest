@@ -113,6 +113,11 @@ ENTRY(system_call)
 			
 	callq	system_call_function
 
+/*
+ret_system_call:
+
+*/
+
 ENTRY(ret_system_call)			
 	movq %rax,0x80(%rsp)		 
 	popq %r15				 

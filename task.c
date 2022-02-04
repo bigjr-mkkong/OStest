@@ -21,7 +21,7 @@ void user_level_function(){
 					);	
 					*/
 	
-	printk(WHITE,BLACK,"user level programming is running\n");
+	//printk(WHITE,BLACK,"user level programming is running\n");
 
 	while(1);
 }
@@ -65,7 +65,7 @@ unsigned long do_execve(struct pt_regs *regs){
 		current->addr_limit = 0xffff800000000000;
 
 	memcpy(user_level_function,(void *)0x800000,1024);
-	while(1);
+	//while(1);
 	return 1;
 }
 extern void kernel_thread_func(void);
@@ -119,7 +119,7 @@ unsigned long init(unsigned long arg){
 				"jmp do_execve	\n\t"
 				::"D"(regs),"m"(current->thread->rsp),"m"(current->thread->rip):"memory");
 
-	return 1;
+	return 1;//return to do_exit()
 }
 
 void __switch_to(struct task_struct *prev,struct task_struct *next){
