@@ -169,6 +169,7 @@ void task_init(){
 	//entry funciton is kernel_thread_func in order to recover the context
 	kernel_thread(init,0xff,CLONE_FS|CLONE_FILES|CLONE_SIGNAL);
 	init_task_union.task.state=TASK_RUNNING;
+	init_task_union.task.spin_counter=0;
 	//tmp=container_of(list_next(&task_schedule.task_queue.list),struct task_struct,list);
 	//switch_to(current,tmp);
 }
@@ -209,6 +210,7 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 	tsk->pid++;
 	tsk->state=TASK_UNINTERRUPTIBLE;
 	tsk->priority=2;
+	tsk->spin_counter=0;
 
 	thd=(struct thread_struct *)(tsk+1);
 	memset(thd,0,sizeof(*thd));

@@ -27,7 +27,8 @@ OLDSS=0xb8
 
 TSK_STATE=0x0
 TSK_FLAGS=0x08
-TSK_SIGNAL=0x10
+TSK_SPINCOUNTER=0x10
+TSK_SIGNAL=0x18
 
 RESTORE_ALL:
 	popq %r15
@@ -59,23 +60,34 @@ RESTORE_ALL:
 
 ret_from_exception:
 	
-
+/*
+Task with one(or more) spin_lock should be prevent from schedule in order to make sure two different task willl
+not access one resource(schedule() can have the potential to switch current task away when current task is using
+some resource)
+*/
 ENTRY(ret_from_intr)
 	movq $-1,%rcx
 	testq softirq_status(%rip),%rcx		/*check for soft irq*/
-	jnz softirq_handler
-	GET_CURRENT(%rbx)
-	movq TSK_FLAGS(%rbx),%rcx
-	testq $2,%rcx
-	jnz reschedule
+	jnz softirq_handler					/*any bits in softirq_status is 1, means there's a softirq, jump to handler*/
+	GET_CURRENT(%rbx)					/*get current task base address(PCB base)*/
+	movq TSK_SPINCOUNTER(%rbx),%rcx		/*move spin_counter to rcx waiting for check*/
+	cmpq $0,%rcx
+	jne RESTORE_ALL						/*if spin_counter(%rcx)!=0, current task is holding some spin_lock, should not schedule*/
+	movq TSK_FLAGS(%rbx),%rcx			/*move flags in to %rcx*/
+	testq $2,%rcx						/*if current task NEED_SCHEDULE bit is set*/
+	jnz reschedule						/*schedule it*/
 	jmp	RESTORE_ALL
 
-softirq_handler:
-	callq do_softirq
+softirq_handler:						/*now handling soft irq*/
+	callq do_softirq					/*execute softiq handler program*/
 	GET_CURRENT(%rbx)
+	/*same as ret_from_intr, prevent task with one(or more) spin_lock from schedule()*/
+	movq TSK_SPINCOUNTER(%rbx),%rcx
+	cmpq $0,%rcx
+	jne RESTORE_ALL
 	movq TSK_FLAGS(%rbx),%rcx
-	testq $2,%rcx
-	jnz reschedule
+	testq $2,%rcx						/*check current task NEED_SCHEDULE bit*/
+	jnz reschedule						/*schedule it*/
 	jmp RESTORE_ALL
 
 reschedule:

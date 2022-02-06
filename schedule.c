@@ -36,7 +36,7 @@ void insert_task_queue(struct task_struct *tsk){
 void schedule(){
 	struct task_struct *tsk = NULL;
 
-	current->flags &= ~NEED_SCHEDULE;
+	current->flags &= ~NEED_SCHEDULE;//clear NEED_SCHEDULE bit
 	tsk = get_next_task();
 
 	printk(PURPLE,WHITE,"schedule() next task:%x HPET_counter: %x\n",tsk,HPET_counter);

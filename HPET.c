@@ -40,7 +40,7 @@ void HPET_handler(unsigned long nr, unsigned long parameter, struct pt_regs *reg
             break;
     }
     if(task_schedule.CPU_exec_task_jiffies<=0){
-        current->flags|=NEED_SCHEDULE;
+        current->flags|=NEED_SCHEDULE;//set NEED_SCHEDULE bit 
     }
 }
 

@@ -67,6 +67,7 @@ struct thread_struct{
 struct task_struct{
 	volatile long state;
 	unsigned long flags;
+	long spin_counter;	//counter for the number of spin_lock holds by current task
 	long signal;
 
 	struct List list;
@@ -117,6 +118,7 @@ struct thread_struct init_thread;
 #define INIT_TASK(tsk)\
 {\
 	.state=TASK_UNINTERRUPTIBLE,\
+	.spin_counter=0,\
 	.flags=PF_KTHREAD,\
 	.mm=&init_mm,\
 	.thread=&init_thread,\
