@@ -92,6 +92,7 @@ int vsprintf(char *fmt,va_list args){
 }
 
 void printk(int FR_color,int BK_color,char *fmt,...){
+	cli();//prevent from deadlock
 	va_list args;
 
 	spin_lock(&pos.printk_lock);
@@ -131,6 +132,7 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 		pos.Xposition++;
 	}
 	spin_unlock(&pos.printk_lock);
+	sti();
 }
 
 void frame_buffer_init(){
