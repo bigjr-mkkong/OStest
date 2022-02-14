@@ -3,9 +3,12 @@
 #include "gate.h"
 #include "memory.h"
 #include "schedule.h"
+#include "SMP.h"
 
 extern void ret_system_call(void);
 extern void system_call(void);
+
+struct tss_struct init_tss[NR_CPUS]={[0 ... NR_CPUS-1]=INIT_TSS};
 
 void user_level_function(){
 	/*
@@ -123,11 +126,12 @@ unsigned long init(unsigned long arg){
 }
 
 void __switch_to(struct task_struct *prev,struct task_struct *next){
-	init_tss[0].rsp0=next->thread->rsp0;
+	init_tss[SMP_cpu_id()].rsp0=next->thread->rsp0;
 
-	set_tss64(LABEL_TSS64,init_tss[0].rsp0,init_tss[0].rsp1,init_tss[0].rsp2,init_tss[0].ist1,\
+	/*set_tss64(LABEL_TSS64,init_tss[0].rsp0,init_tss[0].rsp1,init_tss[0].rsp2,init_tss[0].ist1,\
 		init_tss[0].ist2,init_tss[0].ist3,init_tss[0].ist4,init_tss[0].ist5,\
-		init_tss[0].ist6,init_tss[0].ist7);
+		init_tss[0].ist6,init_tss[0].ist7);*/
+
 
 	__asm__ __volatile__("movq %%fs,%0 \n\t":"=a"(prev->thread->fs));
 	__asm__ __volatile__("movq %%gs,%0 \n\t":"=a"(prev->thread->gs));
@@ -136,6 +140,7 @@ void __switch_to(struct task_struct *prev,struct task_struct *next){
 	__asm__ __volatile__("movq %0,%%gs \n\t"::"a"(next->thread->gs));
 
 	wrmsr(0x175,next->thread->rsp0);
+	printk(BLACK,WHITE,"CPUID: %x\n",SMP_cpu_id());
 }
 
 void task_init(){
@@ -159,11 +164,8 @@ void task_init(){
 	wrmsr(0x175,current->thread->rsp0);
 	wrmsr(0x176,(unsigned long)system_call);
 
-	set_tss64(LABEL_TSS64,init_thread.rsp0,init_tss[0].rsp1,init_tss[0].rsp2,init_tss[0].ist1,\
-		init_tss[0].ist2,init_tss[0].ist3,init_tss[0].ist4,init_tss[0].ist5,\
-		init_tss[0].ist6,init_tss[0].ist7);
+	init_tss[SMP_cpu_id()].rsp0=init_thread.rsp0;
 
-	init_tss[0].rsp0=init_thread.rsp0;
 	list_init(&init_task_union.task.list);
 	//setting the first thread in init()
 	//entry funciton is kernel_thread_func in order to recover the context
@@ -211,6 +213,8 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 	tsk->state=TASK_UNINTERRUPTIBLE;
 	tsk->priority=2;
 	tsk->spin_counter=0;
+	tsk->cpu_id=SMP_cpu_id();
+
 
 	thd=(struct thread_struct *)(tsk+1);
 	memset(thd,0,sizeof(*thd));

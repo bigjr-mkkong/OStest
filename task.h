@@ -69,6 +69,7 @@ struct task_struct{
 	unsigned long flags;
 	long spin_counter;	//counter for the number of spin_lock holds by current task
 	long signal;
+	long cpu_id;
 
 	struct List list;
 	struct mm_struct *mm;
@@ -125,6 +126,7 @@ struct thread_struct init_thread;
 	.addr_limit=0xffff800000000000,\
 	.pid=0,\
 	.signal=0,\
+	.cpu_id=0,\
 	.priority=2,\
 	.vir_runtime=0\
 }\
@@ -184,8 +186,7 @@ struct tss_struct{
 	.iomapbaseaddr=0\
 }
 
-struct tss_struct init_tss[NR_CPUS]={[0 ... NR_CPUS-1]=INIT_TSS};
-
+extern struct tss_struct init_tss[NR_CPUS];
 
 struct task_struct *get_current(){
 	struct task_struct * current = NULL;

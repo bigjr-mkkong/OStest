@@ -21,7 +21,7 @@ struct desc_struct {
 };
 
 extern struct gate_struct LABEL_IDT[];
-extern unsigned int LABEL_TSS64[26];
+//extern unsigned int LABEL_TSS64[26];
 extern struct desc_struct LABEL_GDT64[];
 
 

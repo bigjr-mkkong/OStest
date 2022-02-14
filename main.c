@@ -17,7 +17,7 @@
 #include "schedule.h"
 
 #define APIC	1	
-#define APUNUM	3
+#define CPUNUM	3
 
 #if APIC
 #include "APIC.h"
@@ -51,7 +51,7 @@ void Start_Kernel(void){
 	printk(WHITE,BLACK,"Kernel Started\n");
 	//load TR with selector defined in GDT
 	load_TR(10);
-	set_tss64(LABEL_TSS64,_stack_start,_stack_start,_stack_start, 
+	set_tss64((unsigned int *)&init_tss[0],_stack_start,_stack_start,_stack_start, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00,0xffff800000007c00, 
 	0xffff800000007c00,0xffff800000007c00,0xffff800000007c00);
 	set_sys_int();
@@ -65,6 +65,16 @@ void Start_Kernel(void){
 	init_mem();
 
 	slab_init();
+
+	unsigned char *ptr=(unsigned char *)kmalloc(STACK_SIZE,0)+STACK_SIZE;
+	((struct task_struct*)(ptr-STACK_SIZE))->cpu_id=0;
+	init_tss[0].ist1=(unsigned long)ptr;
+	init_tss[0].ist2=(unsigned long)ptr;
+	init_tss[0].ist3=(unsigned long)ptr;
+	init_tss[0].ist4=(unsigned long)ptr;
+	init_tss[0].ist5=(unsigned long)ptr;
+	init_tss[0].ist6=(unsigned long)ptr;
+	init_tss[0].ist7=(unsigned long)ptr;
 
 	frame_buffer_init();
 
@@ -111,7 +121,7 @@ void Start_Kernel(void){
 	printk(PURPLE,BLACK,"\ndisk read end\n");
 	*/
 	printk(WHITE,BLACK,"Initializing SMP...\n");
-	SMP_init();
+	SMP_init();//copy apu boot program to 0xffff800000020000
 	//prepare INIT IPI
 	icr_entry.vector=0x0;
 	icr_entry.deliver_mode=APIC_ICR_IOAPIC_INIT;
@@ -130,13 +140,31 @@ void Start_Kernel(void){
 	//prepare StartUP IPI
 
 	unsigned int *tss=NULL;
-	for(global_i=1;global_i<APUNUM;global_i++){
+	for(global_i=1;global_i<CPUNUM;global_i++){
 		spin_lock(&SMP_lock);
-		_stack_start=(unsigned long)kmalloc(STACK_SIZE,0)+STACK_SIZE;
-		tss=(unsigned int*)kmalloc(128,0);
-		set_tss_descriptor(10+global_i*2,tss);
+		ptr=(unsigned char*)kmalloc(STACK_SIZE,0);
+		_stack_start=(unsigned long)ptr+STACK_SIZE;
+		((struct task_struct*)ptr)->cpu_id=global_i;
 
-		set_tss64(tss,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start,_stack_start);
+		memset(&init_tss[global_i],0,sizeof(struct tss_struct));
+
+		init_tss[global_i].rsp0=_stack_start;
+		init_tss[global_i].rsp1=_stack_start;
+		init_tss[global_i].rsp2=_stack_start;
+
+		ptr=(unsigned char*)kmalloc(STACK_SIZE,0)+STACK_SIZE;
+		((struct task_struct*)(ptr-STACK_SIZE))->cpu_id=global_i;
+
+		init_tss[global_i].ist1=(unsigned long)ptr;
+		init_tss[global_i].ist2=(unsigned long)ptr;
+		init_tss[global_i].ist3=(unsigned long)ptr;
+		init_tss[global_i].ist4=(unsigned long)ptr;
+		init_tss[global_i].ist5=(unsigned long)ptr;
+		init_tss[global_i].ist6=(unsigned long)ptr;
+		init_tss[global_i].ist7=(unsigned long)ptr;
+
+		set_tss_descriptor(10+global_i*2,&init_tss[global_i]);
+
 		icr_entry.vector=0x20;
 		icr_entry.deliver_mode=ICR_Start_up;
 		icr_entry.dest_shorthand=ICR_No_Shorthand;

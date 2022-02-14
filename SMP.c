@@ -93,6 +93,7 @@ void Start_SMP(){
     load_TR(10+(global_i-1)*2);
     spin_unlock(&SMP_lock);
     sti();
+    x=1/0;
     while(1){
         hlt();
     }

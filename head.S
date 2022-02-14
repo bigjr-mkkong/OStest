@@ -60,7 +60,7 @@ setup_idt:
 	jne .setting
 
 setup_TSS64:
-	leaq LABEL_TSS64(%rip),%rdx					/*rdx: 64 bits tss offset*/
+	leaq init_tss(%rip),%rdx					/*rdx: 64 bits tss offset*/
 	xorq %rax,%rax								/*clear rax and rcx*/
 	xorq %rcx,%rcx
 	movq $0x89,%rax								/*rax:1000 1001*/
@@ -272,7 +272,7 @@ IdtLen:	.word	IDT_END - LABEL_IDT - 1
 .quad	LABEL_IDT
 
 /*=============TSS=========================*/
-
+/*
 .globl LABEL_TSS64
 
 LABEL_TSS64:
@@ -282,4 +282,4 @@ TSS64_END:
 Tss64Ptr:
 Tss64Len:	.word	TSS64_END - LABEL_TSS64 - 1
 Tss64_Base:	.quad	LABEL_TSS64
-
+*/
