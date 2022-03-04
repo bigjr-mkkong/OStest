@@ -140,7 +140,7 @@ void __switch_to(struct task_struct *prev,struct task_struct *next){
 	__asm__ __volatile__("movq %0,%%gs \n\t"::"a"(next->thread->gs));
 
 	wrmsr(0x175,next->thread->rsp0);
-	printk(BLACK,WHITE,"CPUID: %x\n",SMP_cpu_id());
+	//printk(BLACK,WHITE,"CPUID: %x\n",SMP_cpu_id());
 }
 
 void task_init(){

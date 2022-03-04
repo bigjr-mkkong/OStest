@@ -7,6 +7,8 @@
 #include "ptrace.h"
 #include "cpu.h"
 #include "APIC.h"
+#include "schedule.h"
+#include "SMP.h"
 
 unsigned long ioapic_rte_read(unsigned char index){
 	unsigned long ret;
@@ -302,8 +304,12 @@ void do_IRQ(struct pt_regs *regs,unsigned long nr){ //regs:rsp,nr
 			break;
 		
 		case 0x80:
-			printk(RED,BLACK,"SMP IPI: %x\n",nr);
 			Local_APIC_edge_level_ack(nr);
+			task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies-=2;
+			current->vir_runtime++;
+			if(task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies<=0){
+				current->flags|=NEED_SCHEDULE;
+			}
 			break;
 
 		default:

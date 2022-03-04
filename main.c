@@ -175,7 +175,7 @@ void Start_Kernel(void){
 	}
 
 	//IPI sending test
-	icr_entry.vector=0xc9;
+	icr_entry.vector=0xc8;
 	icr_entry.destination.x2apic_destination=1;
 	icr_entry.deliver_mode=APIC_ICR_IOAPIC_Fixed;
 	wrmsr(0x830,*(unsigned long*)&icr_entry);

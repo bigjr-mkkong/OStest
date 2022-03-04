@@ -69,6 +69,7 @@ Build_IRQ(0x35)
 Build_IRQ(0x36)
 Build_IRQ(0x37)
 
+//IRQ for IPI
 Build_IRQ(0xc8)
 Build_IRQ(0xc9)
 Build_IRQ(0xca)

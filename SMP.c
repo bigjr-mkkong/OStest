@@ -89,11 +89,31 @@ void Start_SMP(){
 		:"memory"
 		);
 	printk(WHITE,BLACK,"APU: x2APIC_ID: %x\n",x);
+    
     memset(current,0,sizeof(struct task_struct));
+    current->state=TASK_RUNNING;
+    current->cpu_id=global_i-1;
+    current->flags=PF_KTHREAD;
+    current->mm=&init_mem;
+
+    list_init(&current->list);
+    current->addr_limit=0xffff800000000000;
+    current->priority=2;
+    current->vir_runtime=0;
+
+    current->thread=(struct thread_struct*)(current+1);
+    memset(current->thread,0,sizeof(struct thread_struct));
+    current->thread->rsp0=_stack_start;
+    current->thread->rsp=_stack_start;
+    current->thread->fs=KERNEL_DS;
+    current->thread->gs=KERNEL_DS;
+    init_task[SMP_cpu_id()]=current;
+
     load_TR(10+(global_i-1)*2);
     spin_unlock(&SMP_lock);
+    current->spin_counter=0;
     sti();
-    x=1/0;
+    task_init();
     while(1){
         hlt();
     }
