@@ -92,7 +92,6 @@ void Start_SMP(){
     
     memset(current,0,sizeof(struct task_struct));
     current->state=TASK_RUNNING;
-    current->cpu_id=global_i-1;
     current->flags=PF_KTHREAD;
     current->mm=&init_mem;
 
