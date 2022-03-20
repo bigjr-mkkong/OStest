@@ -28,6 +28,7 @@ entry64:
 	movq %rax,%ds
 	movq %rax,%es
 	movq %rax,%gs
+	movq %rax,%fs
 	movq %rax,%ss
 	movq _stack_start(%rip),%rsp
 

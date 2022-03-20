@@ -28,7 +28,7 @@
 	"movq %rdx,%es;\n\t"
 
 #define IRQ_NAME2(nr) nr##_interrupt(void)
-#define IRQ_NAME(nr) IRQ_NAME2(IRQ##nr)
+#define IRQ_NAME(nr) IRQ_NAME2(IRQ##nr)//E.G. IRQ0X20_interrupt
 
 #define Build_IRQ(nr)\
 void IRQ_NAME(nr);\
@@ -70,7 +70,7 @@ Build_IRQ(0x36)
 Build_IRQ(0x37)
 
 //IRQ for IPI
-Build_IRQ(0xc8)
+Build_IRQ(0xc8)//rsp: 0xffff800001627fd8
 Build_IRQ(0xc9)
 Build_IRQ(0xca)
 Build_IRQ(0xcb)
@@ -152,4 +152,17 @@ int unregister_irq(unsigned long irq){
 	p->handler=NULL;
 
 	return 1;
+}
+
+int register_IPI(unsigned long irq, void *arg, \
+	void (*handler)(unsigned long nr, unsigned long parameter,struct pt_regs *regs), unsigned long parameter,\
+	hw_int_controller *controller, char *irq_name){
+
+		irq_desc_T *p=&SMP_IPI_desc[irq-200];
+		p->controller=controller;
+		p->irq_name=irq_name;
+		p->parameter=parameter;
+		p->flags=0;
+		p->handler=handler;
+		return 1;
 }

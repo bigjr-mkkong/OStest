@@ -305,10 +305,10 @@ void do_IRQ(struct pt_regs *regs,unsigned long nr){ //regs:rsp,nr
 		
 		case 0x80:
 			Local_APIC_edge_level_ack(nr);
-			task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies-=2;
-			current->vir_runtime++;
-			if(task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies<=0){
-				current->flags|=NEED_SCHEDULE;
+
+			irq_desc_T *irq=&SMP_IPI_desc[nr-200];
+			if(irq->handler != NULL){
+				irq->handler(nr,irq->parameter,regs);
 			}
 			break;
 

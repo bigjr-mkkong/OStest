@@ -3,18 +3,21 @@
 #include "task.h"
 #include "SMP.h"
 
+
+struct schedule task_schedule[NR_CPUS]; 
+//0x114cdc
+
 struct task_struct *get_next_task(){
-	struct task_struct * tsk = NULL;
-	
+	struct task_struct *tsk=NULL;
+
 	if(list_is_empty(&task_schedule[SMP_cpu_id()].task_queue.list)){
-		return &init_task_union.task;
+		return init_task[SMP_cpu_id()];
 	}
 
-	tsk = phy2vir(container_of(list_next(&task_schedule[SMP_cpu_id()].task_queue.list),struct task_struct,list));
-
+	tsk=phy2vir(container_of(list_next(&task_schedule[SMP_cpu_id()].task_queue.list),struct task_struct,list));
 	list_del(&tsk->list);
 
-	task_schedule[SMP_cpu_id()].running_task_count -= 1;
+	task_schedule[SMP_cpu_id()].running_task_count-=1;
 
 	return tsk;
 }
@@ -41,10 +44,13 @@ void schedule(){
 	struct task_struct *tsk = NULL;
 	long cpu_id=SMP_cpu_id();
 
-	current->flags &= ~NEED_SCHEDULE;//clear NEED_SCHEDULE bit
-	tsk = get_next_task();
+	cli();
 
-	printk(PURPLE,WHITE,"schedule() next task:%x HPET_counter: %x CPUID: %x\n",tsk,HPET_counter,cpu_id);
+	current->flags &= ~NEED_SCHEDULE;//clear NEED_SCHEDULE bit
+	
+	tsk=get_next_task();
+
+	printk(BLACK,WHITE,"scheduler(CPU: %x): [current: %x tsk: %x]\n",cpu_id,current,tsk);
 
 	if(current->vir_runtime >= tsk->vir_runtime){
 		if(current->state == TASK_RUNNING)
@@ -61,8 +67,8 @@ void schedule(){
 					task_schedule[cpu_id].CPU_exec_task_jiffies=4/task_schedule[cpu_id].running_task_count*3;
 					break;
 			}
-		}	
-		switch_to(current,tsk);	
+		}
+		switch_to(current,tsk);	//0xffff800000114cdc
 	}else{
 		insert_task_queue(tsk);
 		
@@ -79,6 +85,8 @@ void schedule(){
 			}
 		}
 	}
+
+	sti();
 	
 }
 

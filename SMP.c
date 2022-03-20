@@ -4,10 +4,28 @@
 #include "gate.h"
 #include "interrupt.h"
 #include "task.h"
+#include "schedule.h"
 
 extern unsigned char APU_boot_start[];
 extern unsigned char APU_boot_end[];
 extern int global_i;
+
+void IPI_0x200(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
+    switch(current->priority){
+		case 0:
+		case 1:
+			task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies--;
+			current->vir_runtime+=1;
+			break;
+		case 2:
+		default:
+			task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies-=2;
+			current->vir_runtime+=2;
+			break;
+	}
+	if(task_schedule[SMP_cpu_id()].CPU_exec_task_jiffies<=0)
+		current->flags|=NEED_SCHEDULE;
+}
 
 void SMP_init(){
     unsigned int a,b,c,d;
@@ -29,12 +47,13 @@ void SMP_init(){
     spin_init(&SMP_lock);
     
     for(int i=200;i<210;i++){
-        set_intr_gate(i,2,SMP_interrupt[i-200]);
+        set_intr_gate(i,0,SMP_interrupt[i-200]);
     }
     memset(SMP_IPI_desc,0,sizeof(irq_desc_T)*10);
+    register_IPI(200,NULL,&IPI_0x200,NULL,NULL,"IPI 0x200");
 }
 
-void Start_SMP(){
+void Start_SMP(){//rsp==0x1620000
     unsigned long x,y;
     printk(BLACK,WHITE,"APU[%x] Started\n",global_i-1);
     
@@ -89,8 +108,6 @@ void Start_SMP(){
 		:"memory"
 		);
 	printk(WHITE,BLACK,"APU: x2APIC_ID: %x\n",x);
-    
-    memset(current,0,sizeof(struct task_struct));
     current->state=TASK_RUNNING;
     current->flags=PF_KTHREAD;
     current->mm=&init_mem;
@@ -112,8 +129,10 @@ void Start_SMP(){
     spin_unlock(&SMP_lock);
     current->spin_counter=0;
     sti();
+    
     task_init();
+    
     while(1){
         hlt();
     }
-}
+}//10d91c

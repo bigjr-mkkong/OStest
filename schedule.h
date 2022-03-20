@@ -11,7 +11,7 @@ struct schedule{
     struct task_struct task_queue;
 };
 
-struct schedule task_schedule[NR_CPUS];
+extern struct schedule task_schedule[NR_CPUS];
 
 void schedule_init();
 void schedule();
