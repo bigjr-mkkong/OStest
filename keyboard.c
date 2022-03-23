@@ -159,7 +159,7 @@ void analysis_keycode(){
 void keyboard_init(){
     struct IO_APIC_RET_entry entry;
     p_kb=(struct keyboard_input_buf *)kmalloc(sizeof(struct keyboard_input_buf),0);
-
+//p_kb=0xffff800000600000
     p_kb->p_head=p_kb->buf;
     p_kb->p_tail=p_kb->buf;
     p_kb->count=0;

@@ -152,8 +152,6 @@ void Start_Kernel(void){
 		init_tss[global_i].rsp1=_stack_start;
 		init_tss[global_i].rsp2=_stack_start;
 
-		printk(WHITE,BLACK,"[APU%x]ptr: %x | _stack_start: %x\n",global_i,ptr,_stack_start);
-		//ptr: 0x1618000 | _stack_start:0x1620000
 		ptr=(unsigned char*)kmalloc(STACK_SIZE,0)+STACK_SIZE;
 		((struct task_struct*)(ptr-STACK_SIZE))->cpu_id=global_i;
 
@@ -185,11 +183,11 @@ void Start_Kernel(void){
 	printk(WHITE,BLACK,"Time&Clock Initializing...\n");
 	timer_init();
 	HPET_init();
-	sti();
 	printk(WHITE,BLACK,"Task Initializing...\n");
-	task_init();
-	/*
-	while(1){
+	sti();
+	//task_init();
+	
+	while(1){//10ffd1
 		if(p_kb->count){
 			analysis_keycode();
 		}
@@ -197,6 +195,6 @@ void Start_Kernel(void){
 			analysis_mousecode();
 		}
 	}
-	*/
+	
 	while(1);
 }

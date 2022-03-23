@@ -130,9 +130,11 @@ void Start_SMP(){//rsp==0x1620000
     current->spin_counter=0;
     sti();
     
-    task_init();
+    if(SMP_cpu_id()==2){
+        task_init();
+    }
     
     while(1){
         hlt();
     }
-}//10d91c
+}

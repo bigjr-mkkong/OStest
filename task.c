@@ -201,6 +201,7 @@ unsigned long do_fork(struct pt_regs *regs, unsigned long clone_flags, \
 	struct page *p=NULL;
 
 	p=alloc_pages(ZONE_NORMAL,1,PG_PTable_Maped|PG_Kernel);
+	printk(BLACK,GREEN,"CPU[%x]: p->phy_addr: %x\n",SMP_cpu_id(),p->phy_addr);
 
 	tsk=(struct task_struct*) phy2vir(p->phy_addr);
 

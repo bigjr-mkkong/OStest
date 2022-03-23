@@ -281,13 +281,13 @@ struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
 		
 		tmp=64-start % 64;
 
-		for(int j=start;j<=end;j+=j%64?tmp:64){
+		for(int j=start;j<end;j+=j%64?tmp:64){
 			unsigned long *p=mman_struct.bits_map+(j>>6);
 			unsigned long shift=j%64;
 			unsigned long k;
 			unsigned long num=(1UL<<number)-1;
 
-			for(int k=shift;k<64-shift;k++){
+			for(int k=shift;k<64;k++){
 				if( !( (k ? ((*p >> k) | (*(p + 1) << (64 - k))) : *p) & (num) ) ){
 					unsigned long l;
 					page=j+k-shift;
@@ -300,12 +300,13 @@ struct page* alloc_pages(int zone_select,int number,unsigned long page_flags){
 						z->page_free_count--;
 						pageptr->attribute=attribute;
 					}
-					return (struct page *)(mman_struct.pages_struct+page);
+					return (struct page *)(mman_struct.pages_struct+page);//find free pages
 				}
 			}
 		
 		}
 	}
+	printk(RED,BLACK,"alloc_pages(): no free page for alloc\n");
 	return NULL;
 }
 
@@ -341,10 +342,10 @@ void *kmalloc(unsigned long size, unsigned long gpf_flags){
 	}
 	for(i=0;i<16;i++){
 		if(kmalloc_cache_size[i].size>=size){
-			slab=kmalloc_cache_size[i].cache_pool;//<---------------
 			break;
 		}
 	}
+	slab=kmalloc_cache_size[i].cache_pool;//<---------------
 	if(kmalloc_cache_size[i].total_free!=0){
 		do{
 			if(slab->free_count==0){
