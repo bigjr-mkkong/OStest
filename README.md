@@ -54,11 +54,11 @@ to compile and load system in to qemu
 
 +SMP and IPI - Finished
 
-@@Task management: - Working@@
++Task management: - Finished
 
--Schd - Unfinished
++Schd - Finished
 
--Filesystem(FAT32) - Unfinished
+@@Filesystem(FAT32) - Working@@
 
 -API lib - Unfinished
 
