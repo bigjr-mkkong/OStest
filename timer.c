@@ -53,7 +53,7 @@ void add_timer(struct timer_list *timer){
         while(tmp->expired_jiffies<timer->expired_jiffies){
             tmp=container_of(list_next(&tmp->list),struct timer_list,list);
         }
-        list_add_to_behind(&tmp->list,&timer->list);
+        list_add_to_before(&tmp->list,&timer->list);
     }
 }
 
