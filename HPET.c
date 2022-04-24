@@ -24,6 +24,8 @@ hw_int_controller HPET_int_controller =
 void HPET_handler(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
     HPET_counter++;
 
+    //Boardcast HPET interrupt to APUs
+    /*
     struct INT_CMD_REG icr_entry;
     memset(&icr_entry,0,sizeof(struct INT_CMD_REG));
     icr_entry.vector=0xc8;
@@ -33,7 +35,8 @@ void HPET_handler(unsigned long nr, unsigned long parameter, struct pt_regs *reg
     //icr_entry.destination.x2apic_destination=1;
     icr_entry.deliver_mode=APIC_ICR_IOAPIC_Fixed;
     wrmsr(0x830,*(unsigned long*)&icr_entry);
-
+    */
+    
     struct timer_list *tmp=phy2vir(container_of(list_next(&timer_list_head.list),struct timer_list,list));
     if(tmp->expired_jiffies<=HPET_counter){
         set_softirq_status(TIMER_SIRQ);

@@ -102,12 +102,12 @@ void Start_Kernel(void){
 	mouse_init();
 
 	//disk driver test
-	/*
+	
 	char buf[512];
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
 	disk_init();
 	printk(PURPLE,BLACK,"disk write:\n");
-	memset(buf,0x50,512);
+	memset(buf,0x48,512);
 	IDE_device_operation.transfer(ATA_WRITE_CMD,0x3,1,(unsigned char *)buf);
 
 	printk(PURPLE,BLACK,"disk write end\n");
@@ -119,7 +119,7 @@ void Start_Kernel(void){
 	for(int i=0;i<512;i++)
 		printk(BLACK,WHITE,"%x ",buf[i]);
 	printk(PURPLE,BLACK,"\ndisk read end\n");
-	*/
+	
 	printk(WHITE,BLACK,"Initializing SMP...\n");
 	SMP_init();//copy apu boot program to 0xffff800000020000
 	//prepare INIT IPI
@@ -184,8 +184,8 @@ void Start_Kernel(void){
 	timer_init();
 	HPET_init();
 	printk(WHITE,BLACK,"Task Initializing...\n");
+	task_init();
 	sti();
-	//task_init();
 	
 	while(1){//10ffd1
 		if(p_kb->count){

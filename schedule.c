@@ -52,7 +52,7 @@ void schedule(){
 
 	printk(BLACK,WHITE,"scheduler(CPU: %x): [current: %x tsk: %x]\n",cpu_id,current,tsk);
 
-	if(current->vir_runtime >= tsk->vir_runtime){
+	if(current->vir_runtime >= tsk->vir_runtime||current->state!=TASK_RUNNING){
 		if(current->state == TASK_RUNNING)
 			insert_task_queue(current);
 			

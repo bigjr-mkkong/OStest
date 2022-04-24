@@ -82,7 +82,7 @@ void analysis_mousecode(){
 void mouse_init(){
     struct IO_APIC_RET_entry entry;
     
-    p_mouse=(struct keyboard_input_buf *)kmalloc(sizeof(struct keyboard_input_buf),0);
+    p_mouse=(struct keyboard_input_buf *)kmalloc(sizeof(struct keyboard_input_buf)+0x20,0);
 
     p_mouse->p_head=p_mouse->buf;
 	p_mouse->p_tail=p_mouse->buf;

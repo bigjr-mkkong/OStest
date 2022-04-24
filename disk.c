@@ -10,7 +10,7 @@ disk_flags:
 1: Queue is busy
 0: Queue is free
 */
-static int disk_flags=0;
+//static int disk_flags=0;
 static unsigned long query_num=0;
 
 hw_int_controller disk_int_controller={
@@ -21,11 +21,18 @@ hw_int_controller disk_int_controller={
 	.ack=IOAPIC_edge_ack,
 };
 
-void end_request(){
+void end_request(struct block_buffer_node *node){
+	if(node==NULL) {
+		printk(RED,BLACK,"disk end request error");
+	}
+	node->wait_queue.tsk->state=TASK_RUNNING;
+	insert_task_queue(node->wait_queue.tsk);
+	node->wait_queue.tsk->flags|=NEED_SCHEDULE;
+
 	kfree((unsigned long*)disk_request.in_using);
 	disk_request.in_using=NULL;
 
-	disk_flags=0;
+	//disk_flags=0;
 
 	if(disk_request.block_request_count){// keep sending request to disk
 		cmd_out();
@@ -41,14 +48,15 @@ void read_handler(unsigned long nr, unsigned long parameter){
 		port_insw(PORT_DISK0_DATA,node->buffer,256);
 	}
 
-	end_request();
+	end_request(node);
 }
 
 void write_handler(unsigned long nr, unsigned long parameter){
+	struct block_buffer_node *node=((struct request_queue *)parameter)->in_using;
 	if(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_ERROR){
 		printk(RED,BLACK,"write_handler: %x\n",io_in8(PORT_DISK0_ERR_FEATURE));
 	}
-	end_request();
+	end_request(node);
 }
 
 void other_handler(unsigned long nr, unsigned long parameter){
@@ -59,7 +67,7 @@ void other_handler(unsigned long nr, unsigned long parameter){
 	else
 		port_insw(PORT_DISK0_DATA,node->buffer,256);
 
-	end_request();
+	end_request(node);
 }
 
 /*
@@ -70,7 +78,8 @@ struct block_buffer_node *make_request(long cmd, unsigned long blocks, long coun
 		struct block_buffer_node *node=\
 		(struct block_buffer_node*)kmalloc(sizeof(struct block_buffer_node),0);
 
-		list_init(&node->list);
+		//list_init(&node->list);
+		wait_queue_init(&node->wait_queue,current);
 
 		switch(cmd){
 			case ATA_READ_CMD:
@@ -98,7 +107,7 @@ struct block_buffer_node *make_request(long cmd, unsigned long blocks, long coun
 Function to link each single block_buffer_node in to disk_request->queue_list
 */
 void add_request(struct block_buffer_node *node){
-	list_add_to_before(&disk_request.queue_list,&node->list);
+	list_add_to_before(&disk_request.wait_queue_list.wait_list,&node->wait_queue.wait_list);
 	disk_request.block_request_count++;
 }
 /*
@@ -113,10 +122,8 @@ void submit(struct block_buffer_node *node){
 }
 
 void wait_for_finish(){
-	disk_flags=1;//set disk in to using status
-	while(disk_flags){
-		nop();
-	}
+	current->state=TASK_UNINTERRUPTIBLE;
+	schedule();
 }
 
 long IDE_open(){//TODO
@@ -171,9 +178,11 @@ only send out command, disk will send in an interrupt signal if finished||fault
 */
 long cmd_out(){
 	//Pick block_buffer_node in disk_request and move it in to in_using
-	disk_request.in_using=phy2vir(container_of(list_next(&disk_request.queue_list),struct block_buffer_node,list));
-	struct block_buffer_node *node=disk_request.in_using;
-	list_del(&disk_request.in_using->list);
+	wait_queue_T *wait_queue_tmp=phy2vir(container_of(\
+		list_next(&disk_request.wait_queue_list.wait_list),wait_queue_T,wait_list));
+	struct block_buffer_node *node=disk_request.in_using=container_of(\
+		wait_queue_tmp,struct block_buffer_node,wait_queue);
+	list_del(&disk_request.in_using->wait_queue.wait_list);
 	disk_request.block_request_count--;
 
 	while(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_BUSY){//wait if disk busy
@@ -282,11 +291,12 @@ void disk_init(){
 
 	io_out8(PORT_DISK0_ALT_STA_CTL,0);
 	
-	list_init(&disk_request.queue_list);
+	//list_init(&disk_request.queue_list);
+	wait_queue_init(&disk_request.wait_queue_list,NULL);
 	disk_request.in_using=NULL;
 	disk_request.block_request_count=0;
 	
-	disk_flags=0;
+	//disk_flags=0;
 }
 
 void disk_exit(){

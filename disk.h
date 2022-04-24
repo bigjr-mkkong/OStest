@@ -2,6 +2,7 @@
 #define __DISK_H__
 
 #include "lib.h"
+#include "semaphore.h"
 
 #define PORT_DISK0_DATA			0x1f0
 #define PORT_DISK0_ERR_FEATURE	0x1f1
@@ -358,14 +359,14 @@ struct block_buffer_node{
 	void (*end_handler)(unsigned long nr, unsigned long parameter);
 // handle function after interrupt received
 	unsigned long qnum;//number of request
-	struct List list;
+	wait_queue_T wait_queue;
 };
 
 //queue structure for disk IO
 struct request_queue{
-	struct List queue_list;
+	wait_queue_T wait_queue_list;
 	struct block_buffer_node *in_using;
-	long block_request_count;//	
+	long block_request_count;
 };
 struct request_queue disk_request;
 

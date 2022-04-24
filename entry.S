@@ -151,7 +151,8 @@ ENTRY(ret_system_call)
 	popq %rax				 
 	movq %rax,%es			 
 	popq %rax				 
-	addq $0x38,%rsp	
+	addq $0x38,%rsp
+	sti
 	.byte 0x48		 
 	sysexit
 
