@@ -12,7 +12,9 @@ void do_divide_error(unsigned long rsp, unsigned error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_debug(unsigned long rsp,unsigned long error_code){
@@ -23,7 +25,9 @@ void do_debug(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_nmi(unsigned long rsp,unsigned long error_code){
@@ -34,7 +38,9 @@ void do_nmi(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_breakpoint(unsigned long rsp,unsigned long error_code){
@@ -45,7 +51,9 @@ void do_breakpoint(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_overflow(unsigned long rsp,unsigned long error_code){
@@ -56,7 +64,9 @@ void do_overflow(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_bounds(unsigned long rsp,unsigned long error_code){
@@ -67,7 +77,9 @@ void do_bounds(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_undefined_opcode(unsigned long rsp,unsigned long error_code){
@@ -79,7 +91,9 @@ void do_undefined_opcode(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_dev_not_available(unsigned long rsp,unsigned long error_code){
@@ -91,7 +105,9 @@ void do_dev_not_available(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_double_fault(unsigned long rsp,unsigned long error_code){
@@ -102,7 +118,9 @@ void do_double_fault(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_coprocessor_segment_overrun(unsigned long rsp,unsigned long error_code){
@@ -114,7 +132,9 @@ void do_coprocessor_segment_overrun(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_invalid_TSS(unsigned long rsp,unsigned long error_code){
@@ -145,7 +165,9 @@ void do_invalid_TSS(unsigned long rsp,unsigned long error_code){
 
 	printk(BLACK,RED,"Segment Selector Index:%x\n",error_code&0xfff8);
 
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_segment_not_present(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -175,7 +197,9 @@ void do_segment_not_present(unsigned long rsp,unsigned long error_code){
 
 	printk(BLACK,RED,"Segment Selector Index:%x\n",error_code&0xfff8);
 
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_stack_segment_fault(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -206,7 +230,9 @@ void do_stack_segment_fault(unsigned long rsp,unsigned long error_code){
 
 	printk(BLACK,RED,"Segment Selector Index:%x\n",error_code&0xfff8);
 
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_general_protection(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -237,7 +263,9 @@ void do_general_protection(unsigned long rsp,unsigned long error_code){
 
 	printk(BLACK,RED,"Segment Selector Index:%x\n",error_code&0xfff8);
 
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_page_fault(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -275,7 +303,9 @@ void do_page_fault(unsigned long rsp,unsigned long error_code){
 
 	printk(BLACK,RED,"CR2:%x\n",cr2);
 
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_x87_FPU_error(unsigned long rsp,unsigned long error_code){
@@ -287,7 +317,9 @@ void do_x87_FPU_error(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void do_alignment_check(unsigned long rsp,unsigned long error_code){
@@ -298,7 +330,9 @@ void do_alignment_check(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_machine_check(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -308,7 +342,9 @@ void do_machine_check(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_SIMD_exception(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -319,7 +355,9 @@ void do_SIMD_exception(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 void do_virtualization_exception(unsigned long rsp,unsigned long error_code){
 	unsigned long *p=NULL;
@@ -329,7 +367,9 @@ void do_virtualization_exception(unsigned long rsp,unsigned long error_code){
 		rsp,
 		*p,
 		SMP_cpu_id());
-	while(1);
+	while(1){
+		hlt();
+	}
 }
 
 void set_sys_int(){
