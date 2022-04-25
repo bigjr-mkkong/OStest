@@ -189,21 +189,22 @@ long cmd_out(){
 		nop();
 	}
 
+	printk(RED,YELLOW,"[Disk cmd_out] LBA: %x Count: %x\n",node->LBA,node->count);
 	switch(node->cmd){
 		case ATA_WRITE_CMD:
 			io_out8(PORT_DISK0_DEVICE,0x40);
 			// 48 bits LBA address, should divide in to two part and send each of them
 			io_out8(PORT_DISK0_ERR_FEATURE,0);
-			io_out8(PORT_DISK0_SECTOR_CNT,(node->count>>8)&0xff);
-			io_out8(PORT_DISK0_SECTOR_LOW,(node->LBA>>24)&0xff);
-			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>32)&0xff);
-			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>40)&0xff);
+			io_out8(PORT_DISK0_SECTOR_CNT,	(node->count>>8)	&0xff);
+			io_out8(PORT_DISK0_SECTOR_LOW,	(node->LBA>>24)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_MID,	(node->LBA>>32)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_HIGH,	(node->LBA>>40)		&0xff);
 
 			io_out8(PORT_DISK0_ERR_FEATURE,0);
-			io_out8(PORT_DISK0_SECTOR_CNT,(node->count)&0xff);
-			io_out8(PORT_DISK0_SECTOR_LOW,(node->LBA)&0xff);
-			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>8)&0xff);
-			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>16)&0xff);
+			io_out8(PORT_DISK0_SECTOR_CNT,	(node->count)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_LOW,	(node->LBA)			&0xff);
+			io_out8(PORT_DISK0_SECTOR_MID,	(node->LBA>>8)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_HIGH,	(node->LBA>>16)		&0xff);
 
 			//if disk not ready, wait
 			while(!(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_READY)){
@@ -221,16 +222,16 @@ long cmd_out(){
 			io_out8(PORT_DISK0_DEVICE,0x40);
 
 			io_out8(PORT_DISK0_ERR_FEATURE,0);
-			io_out8(PORT_DISK0_SECTOR_CNT,(node->count>>8)&0xff);
-			io_out8(PORT_DISK0_SECTOR_LOW,(node->LBA>>24)&0xff);
-			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>32)&0xff);
-			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>40)&0xff);
+			io_out8(PORT_DISK0_SECTOR_CNT,	(node->count>>8)	&0xff);
+			io_out8(PORT_DISK0_SECTOR_LOW,	(node->LBA>>24)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_MID,	(node->LBA>>32)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_HIGH,	(node->LBA>>40)		&0xff);
 
 			io_out8(PORT_DISK0_ERR_FEATURE,0);
-			io_out8(PORT_DISK0_SECTOR_CNT,(node->count)&0xff);
-			io_out8(PORT_DISK0_SECTOR_LOW,(node->LBA)&0xff);
-			io_out8(PORT_DISK0_SECTOR_MID,(node->LBA>>8)&0xff);
-			io_out8(PORT_DISK0_SECTOR_HIGH,(node->LBA>16)&0xff);
+			io_out8(PORT_DISK0_SECTOR_CNT,	(node->count)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_LOW,	(node->LBA)			&0xff);
+			io_out8(PORT_DISK0_SECTOR_MID,	(node->LBA>>8)		&0xff);
+			io_out8(PORT_DISK0_SECTOR_HIGH,	(node->LBA>>16)		&0xff);
 
 			//if disk not ready, wait
 			while(!io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_READY){

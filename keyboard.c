@@ -31,7 +31,6 @@ hw_int_controller keyboard_int_controller={
 
 unsigned char get_scancode(){
     unsigned char ret=0;
-    printk(GREEN,BLACK,"p_kb->count: %x\n",p_kb->count);
     if(p_kb->count==0){
         while(!p_kb->count){
             nop();
