@@ -270,7 +270,7 @@ initialize APIC RTE register for hdd
 && initialize disk request queue
 */
 void disk_init(){
-	unsigned char a[512];
+	//unsigned char a[512];
     struct IO_APIC_RET_entry entry;
     
     entry.vector=0x2e;

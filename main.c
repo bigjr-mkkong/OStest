@@ -107,7 +107,7 @@ void Start_Kernel(void){
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
 	disk_init();
 	printk(PURPLE,BLACK,"disk write:\n");
-	memset(buf,0x48,512);
+	memset(buf,0x33,512);
 	IDE_device_operation.transfer(ATA_WRITE_CMD,0x3,1,(unsigned char *)buf);
 
 	printk(PURPLE,BLACK,"disk write end\n");

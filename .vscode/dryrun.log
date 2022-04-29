@@ -1,0 +1,44 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/michael/OStest'
+gcc -E  head.S > head.s
+as --64 -o head.o head.s
+gcc -E  entry.S > entry.s
+as --64 -o entry.o entry.s
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g main.c -DAPIC -D APUNUM=3
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g printk.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g trap.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g memory.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g lib.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g interrupt.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g task.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g cpu.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g APIC.c -o PIC.o
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g keyboard.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g mouse.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g disk.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g SMP.c
+gcc -E  APU_boot.S > APU_boot.s
+as --64 -o APU_boot.o APU_boot.s
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g spinlock.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g time.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g HPET.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g softirq.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g timer.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g schedule.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g atomic.c
+gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g semaphore.c
+ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o  -T Kernel.lds 
+nasm boot/loader.asm -o boot/loader.bin
+nasm boot/boot.asm -o boot/boot.bin
+objcopy --only-keep-debug system kernel.debug
+objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
+dd if=boot/boot.bin of=a.img bs=512 count=1 conv=notrunc
+sudo mount -t msdos -o loop a.img /mnt/floppy/
+sudo cp -fv boot/loader.bin /mnt/floppy/
+sudo cp -fv kernel.bin /mnt/floppy/
+sudo umount /mnt/floppy/
+qemu-system-x86_64 -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img -smp cores=3
+make: Leaving directory '/home/michael/OStest'
+ 
+make: Circular boot/boot.bin <- boot/boot.bin dependency dropped.
+
