@@ -15,6 +15,7 @@
 #include "softirq.h"
 #include "timer.h"
 #include "schedule.h"
+#include "fat32.h"
 
 #define APIC	1	
 #define CPUNUM	3
@@ -102,10 +103,10 @@ void Start_Kernel(void){
 	mouse_init();
 
 	//disk driver test
-	
+	disk_init();
+	/*
 	char buf[512];
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
-	disk_init();
 	printk(PURPLE,BLACK,"disk write:\n");
 	memset(buf,0x33,512);
 	IDE_device_operation.transfer(ATA_WRITE_CMD,0x3,1,(unsigned char *)buf);
@@ -119,7 +120,8 @@ void Start_Kernel(void){
 	for(int i=0;i<512;i++)
 		printk(BLACK,WHITE,"%x ",buf[i]);
 	printk(PURPLE,BLACK,"\ndisk read end\n");
-	
+	*/
+	DISK0_FAT32_FS_init();
 	printk(WHITE,BLACK,"Initializing SMP...\n");
 	SMP_init();//copy apu boot program to 0xffff800000020000
 	//prepare INIT IPI

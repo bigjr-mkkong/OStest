@@ -188,8 +188,6 @@ long cmd_out(){
 	while(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_BUSY){//wait if disk busy
 		nop();
 	}
-
-	printk(RED,YELLOW,"[Disk cmd_out] LBA: %x Count: %x\n",node->LBA,node->count);
 	switch(node->cmd){
 		case ATA_WRITE_CMD:
 			io_out8(PORT_DISK0_DEVICE,0x40);
