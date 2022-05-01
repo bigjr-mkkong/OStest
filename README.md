@@ -4,7 +4,7 @@ I'm still working on this 64 bits OS kernel, see TODO for current progress.
 
 ### Environment:
 
-System:
+Host OS:
 
 Ubuntu 20.04.3 LTS
 
