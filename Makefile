@@ -9,7 +9,8 @@ Object := head.o entry.o main.o printk.o trap.o memory.o \
 	spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o fat32.o
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
-	-enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=$(APUNUM) -hda 80m.img
+	-enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=$(APUNUM) -hda disk.img \
+	-boot order=a
 
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
@@ -21,6 +22,8 @@ all: system boot
 	sudo umount /mnt/floppy/
 	qemu-system-x86_64 $(QemuParameter)
 
+diskimg:
+	qemu-img create -f raw disk.img 100M
 
 system:	$(Object)
 	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 
