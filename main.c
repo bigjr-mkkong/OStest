@@ -102,25 +102,24 @@ void Start_Kernel(void){
 	printk(WHITE,BLACK,"Initializing mouse driver...\n");
 	mouse_init();
 
-	//disk driver test
-	disk_init();
-	
-	char buf[512];
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
+	disk_init();
+
+	char buf[512];
 	printk(PURPLE,BLACK,"disk write:\n");
-	memset(buf,0x33,512);
+	memset(buf,0x1,512);
 	IDE_device_operation.transfer(ATA_WRITE_CMD,0x3,1,(unsigned char *)buf);
 
 	printk(PURPLE,BLACK,"disk write end\n");
 
 	printk(PURPLE,BLACK,"disk read:\n");
-	memset(buf,0x00,512);
+	memset(buf,0x0,512);
 	IDE_device_operation.transfer(ATA_READ_CMD,0x3,1,(unsigned char *)buf);
-/*
-	for(int i=0;i<512;i++)
-		printk(BLACK,WHITE,"%x ",buf[i]);
-*/	printk(PURPLE,BLACK,"\ndisk read end\n");
-	
+	for(int i=0;i<512;i++){
+		printk(YELLOW,BLACK,"%x ",buf[i]);
+	}//Interrupt concurrency problem may appear here if there're no tasks(only Idle task) in the task queue
+	printk(PURPLE,BLACK,"\ndisk read end\n");
+
 	//DISK0_FAT32_FS_init();
 	printk(WHITE,BLACK,"Initializing SMP...\n");
 	SMP_init();//copy apu boot program to 0xffff800000020000

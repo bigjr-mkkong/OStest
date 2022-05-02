@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "printk.h"
 #include "lib.h"
+#include "SMP.c"
 
 /*
 disk_flags:
@@ -109,6 +110,7 @@ Function to link each single block_buffer_node in to disk_request->queue_list
 void add_request(struct block_buffer_node *node){
 	list_add_to_before(&disk_request.wait_queue_list.wait_list,&node->wait_queue.wait_list);
 	disk_request.block_request_count++;
+	disk_request.queue_status=QUEUE_WAITING_4_DISK;
 }
 /*
 Function to add block_buffer_node in to disk_request->queue_list
@@ -122,6 +124,13 @@ void submit(struct block_buffer_node *node){
 }
 
 void wait_for_finish(){
+	if(task_schedule[SMP_cpu_id()].running_task_count==1){
+		while(disk_request.queue_status==QUEUE_WAITING_4_DISK){
+			nop();
+		}
+		return;
+	}
+
 	current->state=TASK_UNINTERRUPTIBLE;
 	schedule();
 }
@@ -258,6 +267,7 @@ struct block_device_operation IDE_device_operation={
 //Interrupt handler program for disk
 void disk_handler(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
     struct block_buffer_node *node=((struct request_queue*)parameter)->in_using;
+	disk_request.queue_status=QUEUE_READY_4_NXT;
 	node->end_handler(nr,parameter);//call end_handler() for disk
 }
 

@@ -362,11 +362,15 @@ struct block_buffer_node{
 	wait_queue_T wait_queue;
 };
 
+#define QUEUE_WAITING_4_DISK		0x0
+#define QUEUE_READY_4_NXT			0x1
+
 //queue structure for disk IO
 struct request_queue{
 	wait_queue_T wait_queue_list;
 	struct block_buffer_node *in_using;
 	long block_request_count;
+	unsigned int queue_status;
 };
 struct request_queue disk_request;
 
