@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Fri Apr 29 14:40:31 2022
+# Make data base, printed on Tue May  3 14:33:53 2022
 
 # Variables
 
@@ -35,7 +35,7 @@ VSCODE_LOG_NATIVE = false
 # default
 MAKE_VERSION := 4.2.1
 # makefile (from 'Makefile', line 7)
-Object := head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o 
+Object := head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o fat32.o
 # makefile
 CURDIR := /home/michael/OStest
 # makefile
@@ -52,6 +52,7 @@ CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 MAKEFILE_LIST :=  Makefile
 # 'override' directive
 GNUMAKEFLAGS := 
+ 
 # environment
 MAKELEVEL := 0
 # environment
@@ -67,7 +68,7 @@ LC_NAME = en_US.UTF-8
 # environment
 VSCODE_CWD = /home/michael
 # environment
-SSH_CONNECTION = 169.231.215.222 57305 169.231.79.234 22
+SSH_CONNECTION = 169.231.223.52 59928 169.231.78.172 22
 # environment
 PATH = /home/michael/.vscode-server/bin/dfd34e8260c270da74b5c2d86d61aee4b6d56977/bin/remote-cli:/home/michael/.local/bin:/home/michael/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 # environment
@@ -77,7 +78,7 @@ VSCODE_LOG_STACK = false
 # environment
 LC_NUMERIC = en_US.UTF-8
 # environment
-VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-4445b861-5832-4207-95b4-e956db4cbffc.sock
+VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-9dd7819b-abd3-41e5-b176-48bb67c7565d.sock
 # default
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
 # environment
@@ -117,7 +118,7 @@ MAKECMDGOALS := all
 # environment
 SHLVL = 1
 # environment
-XDG_SESSION_ID = 5
+XDG_SESSION_ID = 4
 # environment
 USER = michael
 # environment
@@ -143,7 +144,7 @@ MAKEFLAGS = pqrR
 # environment
 MFLAGS = -pqrR
 # environment
-SSH_CLIENT = 169.231.215.222 57305 22
+SSH_CLIENT = 169.231.223.52 59928 22
 # automatic
 +D = $(patsubst %/,%,$(dir $+))
 # environment
@@ -163,7 +164,7 @@ LC_PAPER = en_US.UTF-8
 # default
 SUFFIXES := 
 # makefile (from 'Makefile', line 11)
-QemuParameter := -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img -hda 80m.img -smp cores=3
+QemuParameter := -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=3 -hda disk.img -boot order=a
 # default
 .INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
 # environment
@@ -189,9 +190,9 @@ MOTD_SHOWN = pam
 
 # Directories
 
-# . (device 66313, inode 525393): 66 files, no impossibilities.
+# . (device 66313, inode 525393): 68 files, no impossibilities.
 
-# 66 files, no impossibilities in 1 directories.
+# 68 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -203,8 +204,16 @@ semaphore.o: semaphore.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 106):
+#  recipe to execute (from 'Makefile', line 110):
 	gcc  $(CFLAGS) semaphore.c
+
+diskimg:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 26):
+	qemu-img create -f raw disk.img 100M
+	# 2 create primary partition: remember sync disk with "w" command at last
 
 # Not a target:
 cpu.c:
@@ -242,7 +251,7 @@ head.o: head.S
 # ? := head.S
 # variable set hash-table stats:
 # Load=8/32=25%, Rehash=0, Collisions=1/11=9%
-#  recipe to execute (from 'Makefile', line 29):
+#  recipe to execute (from 'Makefile', line 33):
 	gcc -E  head.S > head.s
 	as --64 -o head.o head.s
 
@@ -250,14 +259,14 @@ mouse.o: mouse.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 72):
+#  recipe to execute (from 'Makefile', line 76):
 	gcc  $(CFLAGS) mouse.c
 
 spinlock.o: spinlock.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 85):
+#  recipe to execute (from 'Makefile', line 89):
 	gcc  $(CFLAGS) spinlock.c
 
 # Not a target:
@@ -270,14 +279,13 @@ task.o: task.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 55):
+#  recipe to execute (from 'Makefile', line 59):
 	gcc  $(CFLAGS) task.c
 
 # Not a target:
 HPET.c:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
- 
 #  File has not been updated.
 
 all: system boot
@@ -288,7 +296,7 @@ all: system boot
 #  Needs to be updated (-q is set).
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/3=0%
-#  recipe to execute (from 'Makefile', line 15):
+#  recipe to execute (from 'Makefile', line 16):
 	objcopy --only-keep-debug system kernel.debug
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
 	dd if=boot/boot.bin of=a.img bs=512 count=1 conv=notrunc
@@ -320,7 +328,7 @@ SMP.o: SMP.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 78):
+#  recipe to execute (from 'Makefile', line 82):
 	gcc  $(CFLAGS) SMP.c
 
 # Not a target:
@@ -345,21 +353,21 @@ printk.o: printk.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 40):
+#  recipe to execute (from 'Makefile', line 44):
 	gcc  $(CFLAGS) printk.c
 
 softirq.o: softirq.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 94):
+#  recipe to execute (from 'Makefile', line 98):
 	gcc  $(CFLAGS) softirq.c
 
 boot/loader.bin: boot/loader.asm
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 111):
+#  recipe to execute (from 'Makefile', line 118):
 	nasm boot/loader.asm -o boot/loader.bin
 
 # Not a target:
@@ -371,7 +379,7 @@ disk.c:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-04-19 22:35:05.931604379
+#  Last modified 2022-05-03 14:33:24.757591482
 #  File has been updated.
 #  Successfully updated.
 
@@ -410,7 +418,7 @@ entry.o: entry.S
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 33):
+#  recipe to execute (from 'Makefile', line 37):
 	gcc -E  entry.S > entry.s
 	as --64 -o entry.o entry.s
 
@@ -436,14 +444,14 @@ time.o: time.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 88):
+#  recipe to execute (from 'Makefile', line 92):
 	gcc  $(CFLAGS) time.c
 
 lib.o: lib.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 49):
+#  recipe to execute (from 'Makefile', line 53):
 	gcc  $(CFLAGS) lib.c
 
 # Not a target:
@@ -453,6 +461,7 @@ SMP.c:
 #  File has not been updated.
 
 # Not a target:
+ 
 .DEFAULT:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
@@ -476,18 +485,24 @@ softirq.c:
 #  Modification time never checked.
 #  File has not been updated.
 
+# Not a target:
+fat32.c:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
 PIC.o: APIC.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 62):
+#  recipe to execute (from 'Makefile', line 66):
 	gcc  $(CFLAGS) APIC.c -o PIC.o
 
 clean:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 117):
+#  recipe to execute (from 'Makefile', line 124):
 	rm -rf *.s *.bin *.o *.txt system *.i *.debug
 	rm boot/*.bin
 
@@ -495,35 +510,42 @@ cpu.o: cpu.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 58):
+#  recipe to execute (from 'Makefile', line 62):
 	gcc  $(CFLAGS) cpu.c
 
 interrupt.o: interrupt.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 52):
+#  recipe to execute (from 'Makefile', line 56):
 	gcc  $(CFLAGS) interrupt.c
 
 schedule.o: schedule.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 100):
+#  recipe to execute (from 'Makefile', line 104):
 	gcc  $(CFLAGS) schedule.c
+
+fat32.o: fat32.c
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 113):
+	gcc  $(CFLAGS) fat32.c
 
 HPET.o: HPET.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 91):
+#  recipe to execute (from 'Makefile', line 95):
 	gcc  $(CFLAGS) HPET.c
 
 APU_boot.o: APU_boot.S
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 81):
+#  recipe to execute (from 'Makefile', line 85):
 	gcc -E  APU_boot.S > APU_boot.s
 	as --64 -o APU_boot.o APU_boot.s
 
@@ -531,14 +553,14 @@ keyboard.o: keyboard.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 69):
+#  recipe to execute (from 'Makefile', line 73):
 	gcc  $(CFLAGS) keyboard.c
 
 main.o: main.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 37):
+#  recipe to execute (from 'Makefile', line 41):
 	gcc  $(CFLAGS) main.c -D$(PIC) -D APUNUM=$(APUNUM)
 
 boot: boot/loader.bin boot/boot.bin
@@ -562,29 +584,28 @@ trap.o: trap.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 43):
+#  recipe to execute (from 'Makefile', line 47):
 	gcc  $(CFLAGS) trap.c
 
 timer.o: timer.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
- 
-#  recipe to execute (from 'Makefile', line 97):
+#  recipe to execute (from 'Makefile', line 101):
 	gcc  $(CFLAGS) timer.c
 
 disk.o: disk.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 75):
+#  recipe to execute (from 'Makefile', line 79):
 	gcc  $(CFLAGS) disk.c
 
 boot/boot.bin: boot/boot.bin
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 114):
+#  recipe to execute (from 'Makefile', line 121):
 	nasm boot/boot.asm -o boot/boot.bin
 
 # Not a target:
@@ -597,40 +618,40 @@ atomic.o: atomic.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 103):
+#  recipe to execute (from 'Makefile', line 107):
 	gcc  $(CFLAGS) atomic.c
 
 memory.o: memory.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'Makefile', line 46):
+#  recipe to execute (from 'Makefile', line 50):
 	gcc  $(CFLAGS) memory.c
 
-system: head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o
+system: head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o fat32.o
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has been updated.
 #  Needs to be updated (-q is set).
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/3=0%
-#  recipe to execute (from 'Makefile', line 26):
+#  recipe to execute (from 'Makefile', line 30):
 	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 
 
 # files hash-table stats:
-# Load=58/1024=6%, Rehash=0, Collisions=15/152=10%
+# Load=61/1024=6%, Rehash=0, Collisions=20/158=13%
 # VPATH Search Paths
 
 # No 'vpath' search paths.
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 100 / storage = 853 B / avg = 8 B
-# current buf: size = 8162 B / used = 853 B / count = 100 / avg = 8 B
+# strcache buffers: 1 (0) / strings = 104 / storage = 886 B / avg = 8 B
+# current buf: size = 8162 B / used = 886 B / count = 104 / avg = 8 B
 
-# strcache performance: lookups = 190 / hit rate = 47%
+# strcache performance: lookups = 198 / hit rate = 47%
 # hash-table stats:
-# Load=100/8192=1%, Rehash=0, Collisions=6/190=3%
-# Finished Make data base on Fri Apr 29 14:40:31 2022
+# Load=104/8192=1%, Rehash=0, Collisions=6/198=3%
+# Finished Make data base on Tue May  3 14:33:53 2022
 
  

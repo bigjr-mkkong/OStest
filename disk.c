@@ -122,9 +122,12 @@ void submit(struct block_buffer_node *node){
 		cmd_out();
 	}
 }
-
+/*If there's only Idle task in queue, have to nop until hdd finished to avoid
+some interrupt concurrency problem
+*/
 void wait_for_finish(){
 	if(task_schedule[SMP_cpu_id()].running_task_count==1){
+		current->state=TASK_UNINTERRUPTIBLE;
 		while(disk_request.queue_status==QUEUE_WAITING_4_DISK){
 			nop();
 		}

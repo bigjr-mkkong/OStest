@@ -24,6 +24,7 @@ all: system boot
 
 diskimg:
 	qemu-img create -f raw disk.img 100M
+	# 2 create primary partition: remember sync disk with "w" command at last
 
 system:	$(Object)
 	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 

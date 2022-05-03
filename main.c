@@ -104,7 +104,7 @@ void Start_Kernel(void){
 
 	printk(WHITE,BLACK,"Initializing disk driver...\n");
 	disk_init();
-
+/*
 	char buf[512];
 	printk(PURPLE,BLACK,"disk write:\n");
 	memset(buf,0x1,512);
@@ -119,8 +119,8 @@ void Start_Kernel(void){
 		printk(YELLOW,BLACK,"%x ",buf[i]);
 	}//Interrupt concurrency problem may appear here if there're no tasks(only Idle task) in the task queue
 	printk(PURPLE,BLACK,"\ndisk read end\n");
-
-	//DISK0_FAT32_FS_init();
+*/
+	DISK0_FAT32_FS_init();
 	printk(WHITE,BLACK,"Initializing SMP...\n");
 	SMP_init();//copy apu boot program to 0xffff800000020000
 	//prepare INIT IPI
