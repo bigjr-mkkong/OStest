@@ -20,11 +20,12 @@ all: system boot
 	sudo cp -fv boot/loader.bin /mnt/floppy/
 	sudo cp -fv kernel.bin /mnt/floppy/
 	sudo umount /mnt/floppy/
-	qemu-system-x86_64 $(QemuParameter)
+	sudo qemu-system-x86_64 $(QemuParameter)
 
 diskimg:
 	qemu-img create -f raw disk.img 100M
-	# 2 create primary partition: remember sync disk with "w" command at last
+
+	# mkfs.fat | losetup -o 1048576 --sizelimit 103809024 -f disk.img
 
 system:	$(Object)
 	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 

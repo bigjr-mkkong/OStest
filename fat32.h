@@ -1,7 +1,7 @@
 #ifndef __FAT32_H__
 #define __FAT32_H__
 
-struct Disk_Partition_Entry{
+struct Disk_Partition_Table_Entry{
     unsigned char flag;						//boot indicator
     unsigned char start_head;
     unsigned short  start_sector    :6,
@@ -16,7 +16,7 @@ struct Disk_Partition_Entry{
 
 struct Disk_Partition_Table{
     unsigned char BS_Reserved[446];
-    struct Disk_Partition_Entry DPTE[4];
+    struct Disk_Partition_Table_Entry DPTE[4];
     unsigned short BS_TrailSig;
 }__attribute__((packed));
 
@@ -66,8 +66,7 @@ struct FAT32_FSInfo{
     unsigned int FSI_TrailSig;
 }__attribute__((packed));
 
-#define is_sys_parti(flag) \
-	(flag==0x80?"Yes":"No")
+#define LBA2SEC(lba) (lba/0x100)
 
 void DISK0_FAT32_FS_init();
 

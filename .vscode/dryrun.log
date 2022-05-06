@@ -4,10 +4,10 @@ gcc -E  head.S > head.s
 as --64 -o head.o head.s
 gcc -E  entry.S > entry.s
 as --64 -o entry.o entry.s
+ 
 gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g main.c -DAPIC -D APUNUM=3
 gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g printk.c
 gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g trap.c
- 
 gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g memory.c
 gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g lib.c
 gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g interrupt.c
@@ -32,6 +32,7 @@ gcc  -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g fat32.c
 ld -b elf64-x86-64 -z muldefs -o system head.o entry.o main.o printk.o trap.o memory.o lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o fat32.o -T Kernel.lds 
  
 nasm boot/loader.asm -o boot/loader.bin
+ 
 nasm boot/boot.asm -o boot/boot.bin
 objcopy --only-keep-debug system kernel.debug
 objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
@@ -40,7 +41,7 @@ sudo mount -t msdos -o loop a.img /mnt/floppy/
 sudo cp -fv boot/loader.bin /mnt/floppy/
 sudo cp -fv kernel.bin /mnt/floppy/
 sudo umount /mnt/floppy/
-qemu-system-x86_64 -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=3 -hda disk.img -boot order=a
+sudo qemu-system-x86_64 -cpu Nehalem,+x2apic -m 512 -enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=3 -hda disk.img -boot order=a
 make: Leaving directory '/home/michael/OStest'
  
 make: Circular boot/boot.bin <- boot/boot.bin dependency dropped.
