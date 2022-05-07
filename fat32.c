@@ -28,7 +28,7 @@ void DISK0_FAT32_FS_init(){
     fat32_bootsector=*(struct FAT32_BootSector*)buf;
     printk(RED,YELLOW,"OEMName: %s\nSecNum for FSInfo: %x\nTotal SectorNum: %x\n",\
     fat32_bootsector.BS_OEMName,\
-    fat32_bootsector.BPB_FSInfo,/*0x454d*/\
+    fat32_bootsector.BPB_FSInfo,\
     fat32_bootsector.BPB_TotSec32);
 
     memset(buf,0,512);
@@ -36,5 +36,9 @@ void DISK0_FAT32_FS_init(){
         DPT.DPTE[0].start_LBA+fat32_bootsector.BPB_FSInfo,\
         1,\
         (unsigned char*)buf);
-    
+    /*fat32_fsinfo=*(struct FAT32_FSInfo*)buf;
+    printk(RED,YELLOW,"FSI LeadSig: %x\n",fat32_fsinfo.FSI_LeadSig);*/
+    for(int i=0;i<512;i++){
+        printk(RED,YELLOW,"%x ",buf[i]);
+    }
 }
