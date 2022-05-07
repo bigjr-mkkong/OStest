@@ -23,9 +23,11 @@ all: system boot
 	sudo qemu-system-x86_64 $(QemuParameter)
 
 diskimg:
-	qemu-img create -f raw disk.img 100M
+	qemu-img create -f raw disk.img 320M
 
-	# mkfs.fat | losetup -o 1048576 --sizelimit 103809024 -f disk.img
+# mkfs.fat | sudo losetup -o 1048576 --sizelimit 334495744 -f disk.img
+# 1048576=2048*512
+# 334495744=653312*512
 
 system:	$(Object)
 	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 

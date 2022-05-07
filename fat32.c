@@ -21,10 +21,20 @@ void DISK0_FAT32_FS_init(){
 
     printk(RED,YELLOW,"FAT32 Boot Sector:\n");
     memset(buf,0,512);
-    IDE_device_operation.transfer(ATA_READ_CMD,DPT.DPTE[0].start_LBA,1,(unsigned char*)buf);
+    IDE_device_operation.transfer(ATA_READ_CMD,\
+        DPT.DPTE[0].start_LBA,\
+        1,\
+        (unsigned char*)buf);
     fat32_bootsector=*(struct FAT32_BootSector*)buf;
-    printk(RED,YELLOW,"OEMName: %s\nSecNum for FSInfo: %x",\
+    printk(RED,YELLOW,"OEMName: %s\nSecNum for FSInfo: %x\nTotal SectorNum: %x\n",\
     fat32_bootsector.BS_OEMName,\
-    fat32_bootsector.BPB_FSInfo);
+    fat32_bootsector.BPB_FSInfo,/*0x454d*/\
+    fat32_bootsector.BPB_TotSec32);
 
+    memset(buf,0,512);
+    IDE_device_operation.transfer(ATA_READ_CMD,\
+        DPT.DPTE[0].start_LBA+fat32_bootsector.BPB_FSInfo,\
+        1,\
+        (unsigned char*)buf);
+    
 }

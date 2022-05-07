@@ -26,6 +26,7 @@ void end_request(struct block_buffer_node *node){
 	if(node==NULL) {
 		printk(RED,BLACK,"disk end request error");
 	}
+	disk_request.queue_status=QUEUE_READY_4_NXT;
 	node->wait_queue.tsk->state=TASK_RUNNING;
 	insert_task_queue(node->wait_queue.tsk);
 	node->wait_queue.tsk->flags|=NEED_SCHEDULE;
@@ -49,6 +50,12 @@ void read_handler(unsigned long nr, unsigned long parameter){
 		port_insw(PORT_DISK0_DATA,node->buffer,256);
 	}
 
+	node->count--;
+	if(node->count){
+		node->buffer+=512;
+		return;
+	}
+
 	end_request(node);
 }
 
@@ -56,6 +63,15 @@ void write_handler(unsigned long nr, unsigned long parameter){
 	struct block_buffer_node *node=((struct request_queue *)parameter)->in_using;
 	if(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_ERROR){
 		printk(RED,BLACK,"write_handler: %x\n",io_in8(PORT_DISK0_ERR_FEATURE));
+	}
+	node->count--;
+	if(node->count){
+		node->buffer+=512;
+		while(!(io_in8(PORT_DISK0_STATUS_CMD)&DISK_STATUS_REQ)){
+			nop();
+		}
+		port_outsw(PORT_DISK0_DATA,node->buffer,256);
+		return;
 	}
 	end_request(node);
 }
@@ -270,7 +286,6 @@ struct block_device_operation IDE_device_operation={
 //Interrupt handler program for disk
 void disk_handler(unsigned long nr, unsigned long parameter, struct pt_regs *regs){
     struct block_buffer_node *node=((struct request_queue*)parameter)->in_using;
-	disk_request.queue_status=QUEUE_READY_4_NXT;
 	node->end_handler(nr,parameter);//call end_handler() for disk
 }
 
