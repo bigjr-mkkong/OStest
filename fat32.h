@@ -66,8 +66,6 @@ struct FAT32_FSInfo{
     unsigned int FSI_TrailSig;
 }__attribute__((packed));
 
-#define LBA2SEC(lba) (lba/0x100)
-
 void DISK0_FAT32_FS_init();
 
 #endif
