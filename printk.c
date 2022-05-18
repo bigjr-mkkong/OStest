@@ -111,11 +111,13 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 			pos.Yposition=0;
 		}
 		if((unsigned char)*(buf+i)=='\n'){
+			write_serial('\n');
 			pos.Yposition++;
 			pos.Xposition=0;
 			continue;
 		}
 		else if((unsigned char)*(buf+i)=='\b'){
+			write_serial('\b');
 			pos.Xposition--;
 			if(pos.Xposition<0){
 				pos.Xposition=(pos.Xresolution/pos.Xcharsize-1)*pos.Xcharsize;
@@ -129,6 +131,7 @@ void printk(int FR_color,int BK_color,char *fmt,...){
 		}
 		putchar(pos.FB_addr,pos.Xresolution,pos.Xposition*pos.Xcharsize,
 		pos.Yposition*pos.Ycharsize,FR_color,BK_color,*(buf+i));
+		write_serial(*(buf+i));
 		pos.Xposition++;
 	}
 	spin_unlock(&pos.printk_lock);

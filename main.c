@@ -1,4 +1,5 @@
 #include "printk.h"
+#include "serial.h"
 #include "gate.h"
 #include "trap.h"
 #include "lib.h"
@@ -48,6 +49,7 @@ void Start_Kernel(void){
 	pos.Ycharsize=16;
 	pos.FB_addr=(int *)0xffff800003000000;
 	pos.FB_len=(pos.Xresolution*pos.Yresolution*4+PAGE_4K_SIZE-1)&(PAGE_4K_MASK);
+	init_serial();
 	spin_init(&pos.printk_lock);
 	printk(WHITE,BLACK,"Kernel Started\n");
 	//load TR with selector defined in GDT
@@ -188,6 +190,10 @@ void Start_Kernel(void){
 	task_init();
 	sti();
 	
+	while(1){
+		printk(RED,GREEN,"K");
+	}
+
 	while(1){//10ffd1
 		if(p_kb->count){
 			analysis_keycode();
