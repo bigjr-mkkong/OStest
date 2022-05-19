@@ -189,10 +189,6 @@ void Start_Kernel(void){
 	printk(WHITE,BLACK,"Task Initializing...\n");
 	task_init();
 	sti();
-	
-	while(1){
-		printk(RED,GREEN,"K");
-	}
 
 	while(1){//10ffd1
 		if(p_kb->count){

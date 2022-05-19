@@ -66,6 +66,44 @@ struct FAT32_FSInfo{
     unsigned int FSI_TrailSig;
 }__attribute__((packed));
 
+#define ATTR_READ_ONLY	(1<<0)
+#define ATTR_HIDDEN		(1<<1)
+#define ATTR_SYSTEM 	(1<<2)
+#define ATTR_VOLUME_ID	(1<<3)
+#define ATTR_DIRECTORY	(1<<4)
+#define ATTR_ARCHIVE	(1<<5)
+#define ATTR_LONGNAME	(ATTR_READ_ONLY | ATTR_HIDDEN | ATTR_SYSTEM | ATTR_VOLUME_ID)
+
+struct FAT32_Directory{
+	unsigned char DIR_Name[11];			//Basic Directory Name
+	unsigned char DIR_Attr;				//Directory Attribute
+	unsigned char DIR_NTres;			//Reserved
+	unsigned char DIR_CrtTimeTenth;		//File create ms timestamp
+	unsigned short DIR_CrtTime;			//File create timestamp
+	unsigned short DIR_CrtDate;			//File create date
+	unsigned short DIR_LastAccDate;		//Last date 2 access
+	unsigned short DIR_FirstClus_HIGH;	//Start Clus (HIGH)
+	unsigned short DIR_WriteTime;		//Last time 2 write
+	unsigned short DIR_WriteDate;		//Last date 2 write
+	unsigned short DIR_FirstClus_LOW;	//Start Clus (LOW)
+	unsigned int DIR_FileSize;			//Directory File Size
+}__attribute__((packed));
+
+#define LOWERCASE_BASE 	(8)
+#define LOWERCASE_EXT	(16)
+
+struct FAT32_LongDirectory{
+	unsigned char LDIR_Ord;				//Order 4 long directory
+	unsigned short LDIR_Name1[5];		//First 1-5 char of name
+	unsigned char LDIR_Attr;			//Directory Attribute (has to be ATTR_LONGNAME)
+	unsigned char LDIR_Type;			//(if (== LDIR_Type 0) is-the-sub-entry-4-long-directory)
+	unsigned char LDIR_Chksum;			//chksum=((chksum&1)?0x80:0)+(checksum>>1)+DIR_Name[N]
+	unsigned short LDIR_Name2[6];		//Middle 6-11 char of name
+	unsigned short LDIR_FirstClus_LOW;	//has to be 0
+	unsigned short LDIR_Name3[2];		//Last 12-13 char of name
+}__attribute__((packed));
+
+
 void DISK0_FAT32_FS_init();
 
 #endif

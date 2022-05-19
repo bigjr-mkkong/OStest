@@ -26,9 +26,12 @@ all: system boot
 diskimg:
 	qemu-img create -f raw disk.img 320M
 
-# mkfs.fat | sudo losetup -o 1048576 --sizelimit 334495744 -f disk.img
+# sudo losetup -o 1048576 --sizelimit 334495744 -f disk.img
+# mkfs.vfat -F 32 /dev/loop[x]
 # 1048576=2048*512
 # 334495744=653312*512
+# mount point(if need): /mnt/diskdir
+
 
 system:	$(Object)
 	ld -b elf64-x86-64 -z muldefs -o system $(Object) -T Kernel.lds 
