@@ -13,8 +13,188 @@ unsigned long BytesPerClus=0;
 unsigned long FirstFAT1Sector=0;
 unsigned long FirstFAT2Sector=0;
 
+unsigned int DISK0_FAT32_read_FAT_Entry(unsigned int fat_entry){
+    unsigned int buf[128];
+    memset(buf,0,512);
+
+    IDE_device_operation.transfer(ATA_READ_CMD,FirstFAT1Sector+(fat_entry>>7),1,(unsigned char*)buf);
+    return buf[fat_entry&0x7f];
+}
+unsigned int DISK0_FAT32_write_FAT_Entry(unsigned int fat_entry, unsigned int value){
+    unsigned int buf[128];
+    memset(buf,0,512);
+
+    IDE_device_operation.transfer(ATA_READ_CMD,FirstFAT1Sector+(fat_entry>>7),1,(unsigned char*)buf);
+    buf[fat_entry & 0x7f]=(buf[fat_entry & 0x7f] & 0xf0000000) | (value & 0x0fffffff);
+    //update both FAT1 and FAT2
+	IDE_device_operation.transfer(ATA_WRITE_CMD,FirstFAT1Sector+(fat_entry>>7),1,(unsigned char*)buf);
+	IDE_device_operation.transfer(ATA_WRITE_CMD,FirstFAT2Sector+(fat_entry>>7),1,(unsigned char*)buf);
+	return 1;
+}
+/*
+lookup(): search directory entry in given directory
+*/
 struct FAT32_Directory *lookup(char *name, int namelen, struct FAT32_Directory *dentry, int flags){
-    
+    unsigned int cluster=0;
+    unsigned long sector=0;
+    unsigned char *buf=NULL;
+
+    unsigned int j=0;
+
+    struct FAT32_Directory *tmpdentry=NULL,*p=NULL;
+    struct FAT32_LongDirectory *tmpldentry=NULL;
+
+    buf=kmalloc(BytesPerClus,0);
+    cluster=(dentry->DIR_FirstClus_HIGH<<16)|(dentry->DIR_FirstClus_LOW);
+
+next_cluster:
+    //read parent cluster sector
+    sector=FirstDataSector+(cluster-2)*fat32_bootsector.BPB_SecPerClus;
+    if(!IDE_device_operation.transfer(ATA_READ_CMD,sector,fat32_bootsector.BPB_SecPerClus,(unsigned char *)buf)){
+        printk(RED,YELLOW,"[FS]: lookup() failed to read disk\n");
+        kfree(buf);
+        return NULL;
+    }
+    tmpdentry=(struct FAT32_Directory*)buf;
+    //search in directory entry
+    for(int i=0;i<BytesPerClus;i+=32,tmpdentry++){
+        if(tmpdentry->DIR_Attr==ATTR_LONGNAME){
+            continue;
+        }
+        if(tmpdentry->DIR_Name[0]==0xe5||tmpdentry->DIR_Name[0]==0x00||tmpdentry->DIR_Name==0x05){
+            continue;
+        }
+        tmpldentry=(struct FAT32_LongDirectory*)tmpdentry-1;
+        j=0;
+        //long directory entry search
+        while(tmpldentry->LDIR_Attr==ATTR_LONGNAME && tmpldentry->LDIR_Ord!=0xe5){
+            for(int x=0;x<5;x++){
+                if(j>namelen&&tmpldentry->LDIR_Name1[x]==0xffff){
+                    continue;
+                }else if(j>namelen||tmpldentry->LDIR_Name1[x]!=(unsigned short*)(name[j++])){
+                    goto continue_cmp_fail;
+                }
+            }
+
+            for(int x=0;x<6;x++){
+                if(j>namelen&&tmpldentry->LDIR_Name2[x]==0xffff){
+                    continue;
+                }else if(j>namelen||tmpldentry->LDIR_Name2[x]!=(unsigned short*)(name[j++])){
+                    goto continue_cmp_fail;
+                }
+            }
+
+            for(int x=0;x<2;x++){
+                if(j>namelen&&tmpldentry->LDIR_Name3[x]==0xffff){
+                    continue;
+                }else if(j>namelen||tmpldentry->LDIR_Name3[x]!=(unsigned short*)(name[j++])){
+                    goto continue_cmp_fail;
+                }
+            }
+
+            if(j>=namelen){
+                p=(struct FAT32_Directory*)kmalloc(sizeof(struct FAT32_Directory),0);
+                *p=*tmpdentry;
+
+                kfree(buf);
+                return p;
+            }
+            tmpldentry--;
+        }
+
+        //short directory entry search
+        j=0;
+        for(int x=0;x<8;x++){
+            switch(tmpdentry->DIR_Name[x]){
+                case ' ':
+                    if(!(tmpdentry->DIR_Attr&ATTR_DIRECTORY)){
+                        if(name[j]=='.'){
+                            continue;
+                        }else if(tmpdentry->DIR_Name[x]==name[j]){
+                            j++;
+                            break;
+                        }else{
+                            goto continue_cmp_fail;
+                        }
+                    }else{
+                        if(j<namelen&&tmpdentry->DIR_Name[x]==name[j]){
+                            j++;
+                            break;
+                        }else if(j==namelen){
+                            continue;
+                        }else{
+                            goto continue_cmp_fail;
+                        }
+                    }
+                case 'A' ... 'Z':
+                case 'a' ... 'z':
+                    if(j<namelen && tmpdentry->DIR_Name[x]==name[j]){
+                        j++;
+                        break;
+                    }else{
+                        goto continue_cmp_fail;
+                    }
+                case '0' ... '9':
+                    if(j<namelen && tmpdentry->DIR_Name[x]==name[j]){
+                        j++;
+                        break;
+                    }else{
+                        goto continue_cmp_fail;
+                    }
+                
+                default:
+                    j++;
+                    break;
+            }
+        }
+        //short file extension
+        if(!(tmpdentry->DIR_Attr & ATTR_DIRECTORY)){
+			j++;
+			for(int x=8;x<11;x++){
+				switch(tmpdentry->DIR_Name[x]){
+					case 'A' ... 'Z':
+					case 'a' ... 'z':
+						if(tmpdentry->DIR_Name[x] == name[j]){
+						    j++;
+						    break;
+						}else{
+						    goto continue_cmp_fail;
+                        }
+
+					case '0' ... '9':
+						if(tmpdentry->DIR_Name[x] == name[j]){
+							j++;
+							break;
+						}else{
+							goto continue_cmp_fail;
+                        }
+					case ' ':
+						if(tmpdentry->DIR_Name[x] == name[j]){
+							j++;
+							break;
+						}else{
+							goto continue_cmp_fail;
+                        }
+					default :
+						goto continue_cmp_fail;
+				}
+			}
+		}
+		p=(struct FAT32_Directory *)kmalloc(sizeof(struct FAT32_Directory),0);
+		*p=*tmpdentry;
+		kfree(buf);
+		return p;
+        
+        continue_cmp_fail:;//goto next entry
+    }
+
+    //read LBA of next cluster from FAT table
+    cluster=DISK0_FAT32_read_FAT_Entry(cluster);
+	if(cluster < 0x0ffffff7)
+		goto next_cluster;
+
+	kfree(buf);
+	return NULL;
 }
 
 /*
@@ -71,7 +251,7 @@ struct FAT32_Directory *path_walk(char *name, unsigned long flags){
         if(path==NULL){
             printk(RED,YELLOW,"Cannot find file or dir: %s\n",dentryname);
             kfree(dentryname);
-            kfree(path);
+            kfree(parent);
             return NULL;
         }
 
@@ -168,5 +348,11 @@ void DISK0_FAT32_FS_init(){
     FirstFAT2Sector=FirstFAT1Sector+fat32_bootsector.BPB_FATSz32;
     BytesPerClus=fat32_bootsector.BPB_SecPerClus*fat32_bootsector.BPB_BytesPerSec;
 
-    
+    dentry=path_walk("/abcd",0);
+
+    if(dentry!=NULL){
+        printk(RED,YELLOW,"File Found, File Size: %x\n",dentry->DIR_FileSize);
+    }else{
+        printk(RED,YELLOW,"File Not Found\n");
+    }
 }
