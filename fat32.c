@@ -128,12 +128,6 @@ next_cluster:
                     }
                 case 'A' ... 'Z':
                 case 'a' ... 'z':
-                    if(j<namelen && tmpdentry->DIR_Name[x]==name[j]){
-                        j++;
-                        break;
-                    }else{
-                        goto continue_cmp_fail;
-                    }
                 case '0' ... '9':
                     if(j<namelen && tmpdentry->DIR_Name[x]==name[j]){
                         j++;
@@ -147,26 +141,19 @@ next_cluster:
                     break;
             }
         }
-        //short file extension
+        //file extension compare
         if(!(tmpdentry->DIR_Attr & ATTR_DIRECTORY)){
 			j++;
 			for(int x=8;x<11;x++){
 				switch(tmpdentry->DIR_Name[x]){
 					case 'A' ... 'Z':
 					case 'a' ... 'z':
+                    case '0' ... '9':
 						if(tmpdentry->DIR_Name[x] == name[j]){
 						    j++;
 						    break;
 						}else{
 						    goto continue_cmp_fail;
-                        }
-
-					case '0' ... '9':
-						if(tmpdentry->DIR_Name[x] == name[j]){
-							j++;
-							break;
-						}else{
-							goto continue_cmp_fail;
                         }
 					case ' ':
 						if(tmpdentry->DIR_Name[x] == name[j]){
@@ -351,7 +338,23 @@ void DISK0_FAT32_FS_init(){
     dentry=path_walk("/abcd",0);
 
     if(dentry!=NULL){
-        printk(RED,YELLOW,"File Found, File Size: %x\n",dentry->DIR_FileSize);
+        printk(RED,YELLOW,"File /abcd Found, File Size: %x\n",dentry->DIR_FileSize);
+    }else{
+        printk(RED,YELLOW,"File Not Found\n");
+    }
+
+    dentry=path_walk("/testdir/longfilenametest.txt",0);
+
+    if(dentry!=NULL){
+        printk(RED,YELLOW,"File /testdir/longfilenametest.txt Found, File Size: %x\n",dentry->DIR_FileSize);
+    }else{
+        printk(RED,YELLOW,"File Not Found\n");
+    }
+
+    dentry=path_walk("/do_not_exist",0);
+
+    if(dentry!=NULL){
+        printk(RED,YELLOW,"File /do_not_exist Found, File Size: %x\n",dentry->DIR_FileSize);
     }else{
         printk(RED,YELLOW,"File Not Found\n");
     }

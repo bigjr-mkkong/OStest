@@ -11,7 +11,7 @@ Object := head.o entry.o main.o printk.o trap.o memory.o \
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
 	-enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=$(APUNUM) -hda disk.img \
-	-boot order=a
+	-boot order=a -nographic
 
 all: system boot
 	objcopy --only-keep-debug system kernel.debug
