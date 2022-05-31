@@ -7,7 +7,7 @@ CFLAGS := -mcmodel=large -fno-builtin -m64 -c -fno-stack-protector -g
 Object := head.o entry.o main.o printk.o trap.o memory.o \
 	lib.o interrupt.o task.o cpu.o PIC.o keyboard.o mouse.o disk.o SMP.o APU_boot.o \
 	spinlock.o time.o HPET.o softirq.o timer.o schedule.o atomic.o semaphore.o fat32.o \
-	serial.o
+	serial.o VFS.o
 
 QemuParameter := -cpu Nehalem,+x2apic -m 512 \
 	-enable-kvm -D ./log.txt -s -S -fda a.img -smp cores=$(APUNUM) -hda disk.img \
@@ -121,6 +121,9 @@ semaphore.o:semaphore.c
 
 fat32.o:fat32.c
 	gcc  $(CFLAGS) fat32.c
+
+VFS.o:VFS.c
+	gcc  $(CFLAGS) VFS.c
 #------------------------bootup-------------------------------
 boot: boot/loader.bin boot/boot.bin
 

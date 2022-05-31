@@ -142,3 +142,14 @@ void wrmsr(unsigned long address,unsigned long value){
         :"d"(value>>32),"a"(value&0xffffffff),"c"(address)
         :"memory");	
 }
+
+unsigned int strcmp(const char *strA, const char *strB){
+    while (*strA){
+        if (*strA != *strB) {
+            break;
+        }
+        strA++;
+        strB++;
+    }
+    return *(const unsigned char*)strA - *(const unsigned char*)strB;
+}

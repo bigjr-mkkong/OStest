@@ -103,6 +103,38 @@ struct FAT32_LongDirectory{
 	unsigned short LDIR_Name3[2];		//Last 12-13 char of name
 }__attribute__((packed));
 
+struct FAT32_sb_info{
+	unsigned long start_sector;
+	unsigned long sector_count;
+
+	long sector_per_clus;
+	long bytes_per_clus;
+	long bytes_per_sector;
+
+	unsigned long Data_firstsector;
+	unsigned long FAT1_firstsector;
+	unsigned long sector_per_FAT;
+	unsigned long NumFATs;
+
+	unsigned long fsinfo_sector_in_fat;
+	unsigned long bootsector_bk_in_fat;
+
+	struct FAT32_FSInfo *fat_fsinfo;
+};
+
+struct FAT32_inode_info{
+	unsigned long first_cluster;
+	unsigned long dentry_location;
+
+	unsigned long dentry_position;
+	unsigned short create_date;
+	unsigned short create_time;
+	unsigned short write_date;
+	unsigned short write_time;
+};
+
+
+
 
 void DISK0_FAT32_FS_init();
 
