@@ -3,6 +3,7 @@
 #include "disk.h"
 #include "lib.h"
 #include "memory.h"
+#include "VFS.h"
 
 struct Disk_Partition_Table DPT;
 struct FAT32_BootSector fat32_bootsector;
@@ -12,6 +13,81 @@ unsigned long FirstDataSector=0;    //First sector number of data sector
 unsigned long BytesPerClus=0;
 unsigned long FirstFAT1Sector=0;
 unsigned long FirstFAT2Sector=0;
+
+void FAT32_write_superblock(struct super_block *sb){
+
+}
+
+void FAT32_put_superblock(struct super_block *sb){
+
+}
+
+void FAT32_write_inode(struct index_node *inode){
+
+}
+
+struct super_block_operations FAT32_sb_ops={
+    .write_superblock=&FAT32_write_superblock,
+    .put_superblock=&FAT32_put_superblock,
+    .write_inode=&FAT32_write_inode,
+};
+
+long FAT32_compare(struct dir_entry *parent_dentry, char *src_filename, char *dst_filename){
+
+}
+
+long FAT32_release(struct dir_entry *dentry){
+
+}
+
+long FAT32_iput(struct dir_entry *dentry, struct index_node *inode){
+
+}
+
+struct dir_entry_operations FAT32_dentry_ops={
+    .compare=&FAT32_compare,
+    .release=&FAT32_release,
+    .iput=&FAT32_iput,
+};
+
+long FAT32_create(struct index_node *inode, struct dir_entry *dentry, long mode){
+
+}
+
+struct dir_entry *FAT32_lookup(struct index_node *parent_node, struct dir_entry *dentry){
+
+}
+
+long FAt32_mkdir(struct index_node *inode, struct dir_entry *dentry, long mode){
+
+}
+
+long FAT32_rmdir(struct index_node *inode, struct dir_entry *dentry){
+
+}
+
+long FAT32_rename(struct index_node *old_inode, struct dir_entry *old_dentry, \
+    struct index_node *new_inode, struct dir_entry *new_dentry){
+
+}
+
+long FAT32_getattr(struct dir_entry *dentry, unsigned long *attr){
+
+}
+
+long FAT32_setattr(struct dir_entry *dentry, unsigned long *attr){
+
+}
+
+struct index_nodes_operations FAT32_inode_ops={
+    .create=&FAT32_create,
+    .lookup=&FAT32_lookup,
+    .mkdir=&FAt32_mkdir,
+    .rmdir=&FAT32_rmdir,
+    .rename=&FAT32_rename,
+    .getattr=FAT32_getattr,
+    .setattr=FAT32_setattr,
+};
 
 unsigned int DISK0_FAT32_read_FAT_Entry(unsigned int fat_entry){
     unsigned int buf[128];
@@ -281,6 +357,90 @@ struct FAT32_Directory *path_walk(char *name, unsigned long flags){
         kfree(path);//better to use kfree() instead memset() 2 prevent memory leak
     }
 }
+
+/*
+    TODO: define vfs operations (superblock, inode, file)
+    and assign some empty functions inside 
+
+*/
+
+struct super_block *fat32_read_superblock(struct Disk_Partition_Table_Entry *DPTE, void *buf){
+    struct super_block *sbp=NULL;
+    struct FAT32_inode_info *finode=NULL;
+    struct FAT32_BootSector *fbs=NULL;
+    struct FAT32_sb_info *fsbi=NULL;
+
+    sbp=(struct super_block *)kmalloc(sizeof(struct super_block),0);
+    memset(sbp,0,sizeof(struct super_block));
+
+    sbp->sb_ops=&FAT32_sb_ops;
+    sbp->private_sb_info=(struct FAT32_sb_info *)kmalloc(sizeof(struct FAT32_sb_info),0);
+
+    //fat32 bootsector
+    fbs=(struct FAT32_BootSector*)buf;
+    fsbi=sbp->private_sb_info;
+    fsbi->start_sector=DPTE->start_LBA;
+    fsbi->sector_count=DPTE->sectors_limit;
+    fsbi->sector_per_clus=fbs->BPB_SecPerClus;
+    fsbi->bytes_per_sector=fbs->BPB_BytesPerSec;
+    fsbi->bytes_per_clus=fbs->BPB_BytesPerSec*fbs->BPB_SecPerClus;
+    fsbi->Data_firstsector=DPTE->start_LBA+fbs->BPB_RsvdSecCnt+fbs->BPB_FATSz32*fbs->BPB_NumFATs;
+
+    fsbi->FAT1_firstsector=DPTE->start_LBA+fbs->BPB_RsvdSecCnt;
+    fsbi->sector_per_FAT=fbs->BPB_FATSz32;
+    fsbi->NumFATs=fbs->BPB_NumFATs;
+    fsbi->fsinfo_sector_in_fat=fbs->BPB_FSInfo;
+    fsbi->bootsector_bk_in_fat=fbs->BPB_BkBootSec;
+
+    //fat32 fsinfo sector
+    fsbi->fat_fsinfo=(struct FAT32_FSInfo*)kmalloc(sizeof(struct FAT32_FSInfo),0);
+    memset(fsbi->fat_fsinfo,0,sizeof(struct FAT32_FSInfo));
+    IDE_device_operation.transfer(ATA_READ_CMD,DPTE->start_LBA+fbs->BPB_FSInfo,1,(unsigned char*)fsbi->fat_fsinfo);
+
+    //directory rntry
+    sbp->root=(struct dir_entry*)kmalloc(sizeof(struct dir_entry),0);
+    memset(sbp->root,0,sizeof(struct dir_entry));
+
+    list_init(&sbp->root->child_node);
+    list_init(&sbp->root->subdirs_list);
+    sbp->root->parent=sbp->root;
+    sbp->root->dir_ops=&FAT32_dentry_ops;
+    sbp->root->name=(char*)kmalloc(2,0);
+    sbp->root->name[0]='/';
+    sbp->root->name_length=1;
+
+    //index node
+    sbp->root->dir_inode=(struct index_node*)kmalloc(sizeof(struct index_node),0);
+    memset(sbp->root->dir_inode,0,sizeof(struct index_node));
+    sbp->root->dir_inode->inode_ops=&FAT32_inode_ops;
+    sbp->root->dir_inode->file_size=0;
+    sbp->root->dir_inode->blocks=(sbp->root->dir_inode->file_size+fsbi->bytes_per_clus-1)/fsbi->bytes_per_sector;
+
+    sbp->root->dir_inode->attributes=FS_ATTR_DIR;
+    sbp->root->dir_inode->sb=sbp;
+
+    //fat32 root inode
+    sbp->root->dir_inode->private_index_info=(struct FAT32_inode_info*)kmalloc(sizeof(struct FAT32_inode_info),0);
+    memset(sbp->root->dir_inode->private_index_info,0,sizeof(struct FAT32_inode_info));
+    finode=(struct FAT32_inode_info*)sbp->root->dir_inode->private_index_info;
+    finode->first_cluster=fbs->BPB_RootClus;
+    finode->dentry_location=0;
+    finode->dentry_position=0;
+    finode->create_date=0;
+    finode->create_time=0;
+    finode->write_date=0;
+    finode->write_time=0;
+    return sbp;
+}
+
+struct file_system_type FAT32_fs_type={
+    .name="FAT32",
+    .fs_flags=0,
+    .read_superblock=fat32_read_superblock,
+    .next=NULL,
+};
+
+
 
 void DISK0_FAT32_FS_init(){
     unsigned char buf[512];

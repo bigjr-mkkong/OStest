@@ -133,9 +133,9 @@ struct FAT32_inode_info{
 	unsigned short write_time;
 };
 
-
-
-
 void DISK0_FAT32_FS_init();
+unsigned int DISK0_FAT32_read_FAT_Entry(unsigned int fat_entry);
+unsigned int DISK0_FAT32_write_FAT_Entry(unsigned int fat_entry, unsigned int value);
+
 
 #endif

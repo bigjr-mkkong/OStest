@@ -2,7 +2,8 @@
 
 struct file_system_type filesystem = {"filesystem",0};
 
-struct super_block *mount_fs(char *name, struct Disk_Partition_Table_Entry *DPTE, void *buf){
+struct super_block *mount_fs(char *name, struct Disk_Partition_Table_Entry *DPTE, \
+    void *buf){
     struct file_system_type *p=NULL;
     for(p=&filesystem;p;p=p->next){
         if(!strcmp(name,p->name)){

@@ -3,6 +3,9 @@
 
 #include "lib.h"
 
+#define FS_ATTR_FILE	(1UL << 0)
+#define FS_ATTR_DIR 	(1UL << 1)
+
 struct super_block_operations{
     void (*write_superblock)(struct super_block *sb);
     void (*put_superblock)(struct super_block *sb);
@@ -37,7 +40,7 @@ struct file_operations{
 struct super_block{
     struct dir_entry *root;
     struct super_block_operations *sb_ops;
-    void *private_sb_data;
+    void *private_sb_info;
 };
 struct index_node{
     unsigned long file_size;
@@ -47,7 +50,7 @@ struct index_node{
     struct super_block *sb;
     struct file_operations *f_ops;
     struct index_nodes_operations *inode_ops;
-    void *private_index_data;
+    void *private_index_info;
 };
 struct dir_entry{
     char *name;
@@ -65,7 +68,7 @@ struct file{
     unsigned long mode;
     struct dir_entry *dentry;
     struct file_operations *f_ops;
-    void *private_data;
+    void *private_info;
 };
 
 struct file_system_type{
@@ -75,4 +78,5 @@ struct file_system_type{
     struct file_system_type *next;
 };
 
+unsigned long umount_fs(struct file_system_type *fs);
 #endif
