@@ -16,9 +16,13 @@ Compiler:
 
 NASM 2.13.02 and GCC 7.5.0
 
-### CPU architecture for system:
+### microarchitecture for this OS:
 
-Nehalem
+Intel Nehalem
+
+### Architecture for this OS:
+
+x86_64
 
 ### How to view this system through simulator:
 
