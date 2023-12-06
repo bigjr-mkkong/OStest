@@ -17,10 +17,10 @@ all: system boot
 	objcopy --only-keep-debug system kernel.debug
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary system kernel.bin
 	dd if=boot/boot.bin of=a.img bs=512 count=1 conv=notrunc
-	sudo mount -t msdos -o loop a.img /mnt/floppy/
-	sudo cp -fv boot/loader.bin /mnt/floppy/
-	sudo cp -fv kernel.bin /mnt/floppy/
-	sudo umount /mnt/floppy/
+	sudo mount -t msdos -o loop a.img /mnt/tmp
+	sudo cp -fv boot/loader.bin /mnt/tmp
+	sudo cp -fv kernel.bin /mnt/tmp
+	sudo umount /mnt/tmp
 	sudo qemu-system-x86_64 $(QemuParameter)
 
 diskimg:
@@ -130,7 +130,7 @@ boot: boot/loader.bin boot/boot.bin
 boot/loader.bin: boot/loader.asm
 	nasm boot/loader.asm -o boot/loader.bin
 
-boot/boot.bin: boot/boot.bin
+boot/boot.bin: boot/boot.asm
 	nasm boot/boot.asm -o boot/boot.bin
 
 clean:
